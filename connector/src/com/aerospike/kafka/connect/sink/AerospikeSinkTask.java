@@ -16,6 +16,7 @@ import com.aerospike.client.AerospikeException;
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
 import com.aerospike.client.policy.ClientPolicy;
+import com.aerospike.client.policy.RecordExistsAction;
 import com.aerospike.client.policy.WritePolicy;
 import com.aerospike.kafka.connect.errors.ConversionError;
 
@@ -62,16 +63,17 @@ public class AerospikeSinkTask extends SinkTask {
 
 	@Override
 	public void start(Map<String, String> props) {
-		log.trace("Starting AerospikeSinkTask");
+		log.trace("Starting {} task with config: {}", this.getClass().getName(), props);
 		try {
 			String hostname = props.get(AerospikeSinkConnector.HOSTNAME_CONFIG);
 			int port = Integer.parseInt(props.getOrDefault(AerospikeSinkConnector.PORT_CONFIG, "3000"));
 			ClientPolicy policy = new ClientPolicy();
 			client = new AerospikeClient(policy, hostname, port);
-			writePolicy = new WritePolicy();
 		} catch (AerospikeException e) {
 			throw new ConnectException("Could not connect to Aerospike cluster", e);
 		}
+
+		writePolicy = createWritePolicy(props);
 
 		namespace = props.get(AerospikeSinkConnector.NAMESPACE_CONFIG);
 		set = props.get(AerospikeSinkConnector.SET_CONFIG);
@@ -79,8 +81,35 @@ public class AerospikeSinkTask extends SinkTask {
 
 	@Override
 	public void stop() {
-		// TODO Auto-generated method stub
+		log.trace("Stopping {} task", this.getClass().getName());
+	}
 
+	private WritePolicy createWritePolicy(Map<String, String> props) {
+		WritePolicy policy = new WritePolicy();
+		String recordExistsAction = props.get(AerospikeSinkConnector.POLICY_RECORD_EXISTS_ACTION);
+		if (recordExistsAction != null) {
+			switch(recordExistsAction) {
+			case "create_only":
+				policy.recordExistsAction = RecordExistsAction.CREATE_ONLY;
+				break;
+			case "replace":
+				policy.recordExistsAction = RecordExistsAction.REPLACE;
+				break;
+			case "replace_only":
+				policy.recordExistsAction = RecordExistsAction.REPLACE_ONLY;
+				break;
+			case "update":
+				policy.recordExistsAction = RecordExistsAction.UPDATE;
+				break;
+			case "update_only":
+				policy.recordExistsAction = RecordExistsAction.UPDATE_ONLY;
+				break;
+			default:
+				log.warn("Unsupported policy value for record_exists_action: {}. Using default value.", recordExistsAction);
+			}
+		}
+		log.trace("Write Policy: recordExistsAction={}", policy.recordExistsAction);
+		return policy;
 	}
 
 }

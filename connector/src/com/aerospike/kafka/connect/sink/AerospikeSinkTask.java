@@ -17,6 +17,7 @@ import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
 import com.aerospike.client.policy.ClientPolicy;
 import com.aerospike.client.policy.WritePolicy;
+import com.aerospike.kafka.connect.errors.ConversionError;
 
 public class AerospikeSinkTask extends SinkTask {
 
@@ -44,12 +45,15 @@ public class AerospikeSinkTask extends SinkTask {
 
 	@Override
 	public void put(Collection<SinkRecord> sinkRecords) {
-		for (SinkRecord sinkRecord : sinkRecords) {
+		for (SinkRecord record : sinkRecords) {
 			try {
-				Key key = converter.convertKey(sinkRecord, namespace, set);
-				log.trace("Writing record for key {}", key);
-				Bin[] bins = converter.convertValue(sinkRecord);
+				KeyAndBins keyAndBins = converter.convertRecord(record, namespace, set);
+				Key key = keyAndBins.getKey();
+				Bin[] bins = keyAndBins.getBins();
+				log.trace("Writing record for key {}: {}", key, bins);
 				client.put(writePolicy, key, bins);
+			} catch (ConversionError e) {
+				log.error("Error converting record", e);
 			} catch (AerospikeException e) {
 				log.error("Error writing to record", e);
 			}

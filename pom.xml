@@ -2,20 +2,26 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.aerospike</groupId>
   <artifactId>apache-kafka-connector</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.1-SNAPSHOT</version>
   <description>Aerospike Connector for Kafka Connect</description>
   <build>
-    <sourceDirectory>connector/src</sourceDirectory>
+    <sourceDirectory>src/main/java</sourceDirectory>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.5.1</version>
         <configuration>
-          <source>7</source>
-          <target/>
+          <source>1.7</source>
+          <target>1.7</target>
         </configuration>
       </plugin>
     </plugins>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
   </build>
   <dependencies>
   	<dependency>

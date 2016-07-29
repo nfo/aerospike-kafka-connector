@@ -16,6 +16,8 @@
  */
 package com.aerospike.kafka.connect.sink;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.kafka.common.config.AbstractConfig;
@@ -26,10 +28,17 @@ import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.config.ConfigDef.ValidString;
 import org.apache.kafka.common.config.ConfigDef.Validator;
 import org.apache.kafka.common.config.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.aerospike.client.policy.RecordExistsAction;
 
 public class AerospikeSinkConnectorConfig extends AbstractConfig {
+	
+	private static final Logger log = LoggerFactory.getLogger(AerospikeSinkConnectorConfig.class);
+
+	public static final String TOPICS_CONFIG = AerospikeSinkConnector.TOPICS_CONFIG;
+	private static final String TOPICS_DOC = "List of Kafka topics";
 
 	public static final String HOSTNAME_CONFIG = "hostname";
 	private static final String HOSTNAME_DOC = "Aerospike Hostname";
@@ -39,12 +48,6 @@ public class AerospikeSinkConnectorConfig extends AbstractConfig {
 	private static final int PORT_DEFAULT = 3000;
 	private static final Validator PORT_VALIDATOR = Range.between(1, 65535);
 
-	public static final String NAMESPACE_CONFIG = "namespace";
-	private static final String NAMESPACE_DOC = "Aerospike Namespace";
-
-	public static final String SET_CONFIG = "set";
-	private static final String SET_DOC = "Aerospike Set";
-
 	public static final String POLICY_RECORD_EXISTS_ACTION_CONFIG = "policy.record_exists_action";
 	private static final String POLICY_RECORD_EXISTS_ACTION_DOC = "Write Policy: How to handle writes when the record already exists";
 	private static final String POLICY_RECORD_EXISTS_ACTION_DEFAULT = "update";
@@ -52,10 +55,9 @@ public class AerospikeSinkConnectorConfig extends AbstractConfig {
 
 	public static ConfigDef baseConfigDef() {
 		return new ConfigDef()
+				.define(TOPICS_CONFIG, Type.LIST, Importance.HIGH, TOPICS_DOC)
 				.define(HOSTNAME_CONFIG, Type.STRING, Importance.HIGH, HOSTNAME_DOC)
 				.define(PORT_CONFIG, Type.INT, PORT_DEFAULT, PORT_VALIDATOR, Importance.LOW, PORT_DOC)
-				.define(NAMESPACE_CONFIG, Type.STRING, Importance.HIGH, NAMESPACE_DOC)
-				.define(SET_CONFIG, Type.STRING, Importance.HIGH, SET_DOC)
 				.define(POLICY_RECORD_EXISTS_ACTION_CONFIG, Type.STRING, POLICY_RECORD_EXISTS_ACTION_DEFAULT, POLICY_RECORD_EXISTS_ACTION_VALIDATOR, Importance.LOW, POLICY_RECORD_EXISTS_ACTION_DOC);
 	}
 
@@ -71,14 +73,6 @@ public class AerospikeSinkConnectorConfig extends AbstractConfig {
 	
 	public int getPort() {
 		return getInt(PORT_CONFIG);
-	}
-	
-	public String getNamespace() {
-		return getString(NAMESPACE_CONFIG);
-	}
-	
-	public String getSet() {
-		return getString(SET_CONFIG);
 	}
 	
 	public RecordExistsAction getPolicyRecordExistsAction() {
@@ -98,6 +92,34 @@ public class AerospikeSinkConnectorConfig extends AbstractConfig {
 			// This should never happen if the configuration passes validation!
 			throw new ConfigException(POLICY_RECORD_EXISTS_ACTION_CONFIG, action, "Unsupported policy value.");
 		}
+	}
+	
+	public TopicConfig getTopicConfig(String prefix) {
+		return getTopicConfig(prefix, null);
+	}
+
+	public TopicConfig getTopicConfig(String prefix, TopicConfig defaultConfig) {
+		Map<String, String> props = new HashMap<>();
+		if (defaultConfig != null) {
+			props.putAll(defaultConfig.originalsStrings());
+		}
+		for (Map.Entry<String, Object> entry : originalsWithPrefix(prefix).entrySet()) {
+			props.put(entry.getKey(), entry.getValue().toString());
+		}
+		log.trace("Creating topic config for prefix {}: {}", prefix, props);
+		return new TopicConfig(props);
+	}
+	
+	public Map<String, TopicConfig> getTopicConfigs() {
+		Map<String, TopicConfig> topicConfigs = new HashMap<>();
+		TopicConfig defaultTopicConfig = getTopicConfig("topic.");
+		List<String> topicNames = getList(TOPICS_CONFIG);
+		for (String topic : topicNames) {
+			String prefix = "topic." + topic + ".";
+			TopicConfig config = getTopicConfig(prefix, defaultTopicConfig);
+			topicConfigs.put(topic, config);
+		}
+		return topicConfigs;
 	}
 
 }

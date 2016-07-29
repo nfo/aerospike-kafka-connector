@@ -43,8 +43,7 @@ public class AerospikeSinkTask extends SinkTask {
 	private RecordConverter converter;
 	private AerospikeClient client;
 	private WritePolicy writePolicy;
-	private String namespace;
-	private String set;
+	private Map<String, TopicConfig> topicConfigs;
 
 	public AerospikeSinkTask() {
 		converter = new RecordConverter();
@@ -63,6 +62,10 @@ public class AerospikeSinkTask extends SinkTask {
 	@Override
 	public void put(Collection<SinkRecord> sinkRecords) {
 		for (SinkRecord record : sinkRecords) {
+			String topic = record.topic();
+			TopicConfig config = topicConfigs.get(topic);
+			String namespace = config.getNamespace();
+			String set = config.getSet();
 			try {
 				KeyAndBins keyAndBins = converter.convertRecord(record, namespace, set);
 				Key key = keyAndBins.getKey();
@@ -91,8 +94,7 @@ public class AerospikeSinkTask extends SinkTask {
 		}
 
 		writePolicy = createWritePolicy(config);
-		namespace = config.getNamespace();
-		set = config.getSet();
+		topicConfigs = config.getTopicConfigs();
 	}
 
 	@Override

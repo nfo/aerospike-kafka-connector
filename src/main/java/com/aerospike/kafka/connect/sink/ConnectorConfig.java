@@ -28,17 +28,14 @@ import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.config.ConfigDef.ValidString;
 import org.apache.kafka.common.config.ConfigDef.Validator;
 import org.apache.kafka.common.config.ConfigException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.aerospike.client.policy.RecordExistsAction;
 import com.aerospike.kafka.connect.mapper.JsonObjectMapper;
 import com.aerospike.kafka.connect.mapper.RecordMapper;
 
 public class ConnectorConfig extends AbstractConfig {
-	
-	private static final Logger log = LoggerFactory.getLogger(ConnectorConfig.class);
 
+	private static final String TOPIC_CONFIG_PREFIX = "topic.";
+	
 	public static final String TOPICS_CONFIG = AerospikeSinkConnector.TOPICS_CONFIG;
 	private static final String TOPICS_DOC = "List of Kafka topics";
 
@@ -55,8 +52,8 @@ public class ConnectorConfig extends AbstractConfig {
 	private static final String POLICY_RECORD_EXISTS_ACTION_DEFAULT = "update";
 	private static final Validator POLICY_RECORD_EXISTS_ACTION_VALIDATOR = ValidString.in("create_only", "update", "update_only", "replace", "replace_only");
 	
-	public static final String MAPPER_CONFIG = "mapper";
-	private static final String MAPPER_DOC = "Record mapper class";
+	public static final String MAPPER_CLASS_CONFIG = "mapper.class";
+	private static final String MAPPER_CLASS_DOC = "Record mapper class";
 	private static final Class<? extends RecordMapper> MAPPER_DEFAULT = JsonObjectMapper.class;
 
 	public static ConfigDef baseConfigDef() {
@@ -65,7 +62,7 @@ public class ConnectorConfig extends AbstractConfig {
 				.define(HOSTNAME_CONFIG, Type.STRING, Importance.HIGH, HOSTNAME_DOC)
 				.define(PORT_CONFIG, Type.INT, PORT_DEFAULT, PORT_VALIDATOR, Importance.LOW, PORT_DOC)
 				.define(POLICY_RECORD_EXISTS_ACTION_CONFIG, Type.STRING, POLICY_RECORD_EXISTS_ACTION_DEFAULT, POLICY_RECORD_EXISTS_ACTION_VALIDATOR, Importance.LOW, POLICY_RECORD_EXISTS_ACTION_DOC)
-				.define(MAPPER_CONFIG, Type.CLASS, MAPPER_DEFAULT, Importance.HIGH, MAPPER_DOC);
+				.define(MAPPER_CLASS_CONFIG, Type.CLASS, MAPPER_DEFAULT, Importance.HIGH, MAPPER_CLASS_DOC);
 	}
 
 	static ConfigDef config = baseConfigDef();
@@ -101,36 +98,21 @@ public class ConnectorConfig extends AbstractConfig {
 		}
 	}
 	
-	public TopicConfig getTopicConfig(String prefix) {
-		return getTopicConfig(prefix, null);
-	}
-
-	public TopicConfig getTopicConfig(String prefix, TopicConfig defaultConfig) {
-		Map<String, String> props = new HashMap<>();
-		if (defaultConfig != null) {
-			props.putAll(defaultConfig.originalsStrings());
-		}
-		for (Map.Entry<String, Object> entry : originalsWithPrefix(prefix).entrySet()) {
-			props.put(entry.getKey(), entry.getValue().toString());
-		}
-		log.trace("Creating topic config for prefix {}: {}", prefix, props);
-		return new TopicConfig(props);
-	}
-	
 	public Map<String, TopicConfig> getTopicConfigs() {
 		Map<String, TopicConfig> topicConfigs = new HashMap<>();
-		TopicConfig defaultTopicConfig = getTopicConfig("topic.");
+		Map<String, Object> defaultTopicConfig = originalsWithPrefix(TOPIC_CONFIG_PREFIX);
 		List<String> topicNames = getList(TOPICS_CONFIG);
 		for (String topic : topicNames) {
-			String prefix = "topic." + topic + ".";
-			TopicConfig config = getTopicConfig(prefix, defaultTopicConfig);
-			topicConfigs.put(topic, config);
+			String prefix = TOPIC_CONFIG_PREFIX + topic + ".";
+			Map<String, Object> config = new HashMap<>(defaultTopicConfig);
+			config.putAll(originalsWithPrefix(prefix));
+			topicConfigs.put(topic, new TopicConfig(config));
 		}
 		return topicConfigs;
 	}
 	
 	public RecordMapper getRecordMapper() {
-		RecordMapper mapper = getConfiguredInstance("mapper", RecordMapper.class);
+		RecordMapper mapper = getConfiguredInstance(MAPPER_CLASS_CONFIG, RecordMapper.class);
 		mapper.setTopicConfigs(getTopicConfigs());
 		return mapper;
 	}

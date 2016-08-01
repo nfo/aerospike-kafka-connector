@@ -39,7 +39,7 @@ public class TopicConfig extends AbstractConfig {
 
 	public static ConfigDef config = baseConfigDef();
 	
-	public TopicConfig(Map<String, String> props) {
+	public TopicConfig(Map<String, Object> props) {
 		super(config, props);
 	}
 	

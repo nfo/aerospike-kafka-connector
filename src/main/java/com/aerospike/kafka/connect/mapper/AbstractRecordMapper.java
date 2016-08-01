@@ -4,27 +4,22 @@ import java.util.Map;
 
 import org.apache.kafka.common.Configurable;
 import org.apache.kafka.connect.sink.SinkRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.aerospike.client.Key;
 import com.aerospike.kafka.connect.sink.TopicConfig;
 
 public abstract class AbstractRecordMapper implements RecordMapper, Configurable {
 
-	private static final Logger log = LoggerFactory.getLogger(AbstractRecordMapper.class);
-	
-	private Map<String, ?> config;
+	private BaseMapperConfig config;
 	private Map<String, TopicConfig> topicConfigs;
 
 	public abstract KeyAndBins convertRecord(SinkRecord record) throws MappingError;
 
-	public void configure(Map<String, ?> config) {
-		log.debug("Configuring {}: {}", this.getClass(), config);
-		this.config = config;
+	public void configure(Map<String, ?> props) {
+		this.config = new BaseMapperConfig(props);
 	}
-
-	public Map<String, ?> getConfig() {
+	
+	protected BaseMapperConfig getConfig() {
 		return config;
 	}
 
@@ -37,13 +32,17 @@ public abstract class AbstractRecordMapper implements RecordMapper, Configurable
 		return topicConfigs.get(topic);
 	}
 
-	protected Key keyFromRecord(SinkRecord record) throws MappingError {
-		Object key = record.key();
-		TopicConfig config = getTopicConfig(record);
-		if (key instanceof String) {
-			return new Key(config.getNamespace(), config.getSet(), (String)key);
-		} else {
-			throw new MappingError("Unsupported record key: " + key);
+	protected Key createKey(String namespace, String set, Object userKey, String keyType) throws MappingError {
+		switch(keyType) {
+		case "string":
+			return new Key(namespace, set, (String)userKey);
+		case "integer":
+			return new Key(namespace, set, (long)userKey);
+		case "bytes":
+			return new Key(namespace, set, (byte[])userKey);
+		default:
+			// This should never happen if the configuration is validated!
+			throw new MappingError("Unsupported key type: " + keyType);
 		}
 	}
 

@@ -24,23 +24,40 @@ import org.apache.kafka.connect.sink.SinkRecord;
 
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
+import com.aerospike.kafka.connect.sink.TopicConfig;
 
 public class JsonObjectMapper extends AbstractRecordMapper {
 
 	public KeyAndBins convertRecord(SinkRecord record) throws MappingError {
-		Key key = keyFromRecord(record);
-		Bin[] bins = binsFromRecord(record);
+		Map<?, ?> value = asMap(record.value());
+		TopicConfig topicConfig = getTopicConfig(record);
+		Key key = keyFromRecord(value, record.key(), topicConfig);
+		Bin[] bins = binsFromMap(value);
 		return new KeyAndBins(key, bins);
 	}
-
-	private Bin[] binsFromRecord(SinkRecord record) throws MappingError {
-		Object value = record.value();
-		if (!(value instanceof Map)) {
-			throw new MappingError("Unsupported record type - expected to get map instance (JSON Object)");
+	
+	private Map<?, ?> asMap(Object value) throws MappingError {
+		if (value instanceof Map) {
+			return (Map<?, ?>) value;
 		}
-		return binsFromMap((Map<?, ?>)value);
+		throw new MappingError("Unsupported record type - expected to get map instance (JSON Object)");
 	}
 	
+	private Key keyFromRecord(Map<?, ?> recordMap, Object recordKey, TopicConfig topicConfig) throws MappingError {
+		String namespace = topicConfig.getNamespace();
+		String set = topicConfig.getSet();
+		Object userKey = recordKey;
+		BaseMapperConfig config = getConfig();
+		if (config.getSetField() != null) {
+			set = recordMap.get(config.getSetField()).toString();
+		}
+		if (config.getKeyField() != null) {
+			userKey = recordMap.get(config.getKeyField());
+		}
+		Key key = createKey(namespace, set, userKey, config.getKeyType());
+		return key;
+	}
+
 	private Bin[] binsFromMap(Map<?, ?> map) {
 		List<Bin> bins = new ArrayList<Bin>();
 		for (Map.Entry<?, ?>entry : map.entrySet()) {

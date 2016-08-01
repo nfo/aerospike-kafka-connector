@@ -29,29 +29,45 @@ import org.slf4j.LoggerFactory;
 
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
+import com.aerospike.kafka.connect.sink.TopicConfig;
 
 public class StructMapper extends AbstractRecordMapper {
 
 	private static final Logger log = LoggerFactory.getLogger(StructMapper.class);
 
 	public KeyAndBins convertRecord(SinkRecord record) throws MappingError {
-		Key key = keyFromRecord(record);
-		Bin[] bins = binsFromRecord(record);
+		Struct value = asStruct(record.value(), record.valueSchema());
+		TopicConfig topicConfig = getTopicConfig(record);
+		Key key = keyFromRecord(value, record.key(), topicConfig);
+		Bin[] bins = binsFromStruct(value);
 		return new KeyAndBins(key, bins);
 	}
 
-	private Bin[] binsFromRecord(SinkRecord record) throws MappingError {
-		Object value = record.value();
-		Schema schema = record.valueSchema();
+	private Struct asStruct(Object value, Schema schema) throws MappingError {
 		if (schema == null) {
 			throw new MappingError("Missing record schema");
 		}
 		if (schema.type() != Type.STRUCT) {
 			throw new MappingError("Unsupported schema type - expected Struct, got " + schema.type());
 		}
-		return binsFromStruct((Struct)value);
+		return (Struct)value;
 	}
-	
+
+	private Key keyFromRecord(Struct struct, Object recordKey, TopicConfig topicConfig) throws MappingError {
+		String namespace = topicConfig.getNamespace();
+		String set = topicConfig.getSet();
+		Object userKey = recordKey;
+		BaseMapperConfig config = getConfig();
+		if (config.getSetField() != null) {
+			set = struct.getString(config.getSetField());
+		}
+		if (config.getKeyField() != null) {
+			userKey = struct.get(config.getKeyField());
+		}
+		Key key = createKey(namespace, set, userKey, config.getKeyType());
+		return key;
+	}
+
 	private Bin[] binsFromStruct(Struct struct) {
 		List<Field> fields = struct.schema().fields();
 		List<Bin> bins = new ArrayList<Bin>();

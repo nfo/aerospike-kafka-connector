@@ -29,12 +29,13 @@ import org.apache.kafka.common.config.ConfigDef.ValidString;
 import org.apache.kafka.common.config.ConfigDef.Validator;
 import org.apache.kafka.common.config.ConfigException;
 import com.aerospike.client.policy.RecordExistsAction;
-import com.aerospike.kafka.connect.mapper.JsonObjectMapper;
+import com.aerospike.kafka.connect.mapper.BaseMapperConfig;
 import com.aerospike.kafka.connect.mapper.RecordMapper;
 
 public class ConnectorConfig extends AbstractConfig {
 
 	private static final String TOPIC_CONFIG_PREFIX = "topic.";
+	private static final String MAPPER_CONFIG_PREFIX = "mapper.";
 	
 	public static final String TOPICS_CONFIG = AerospikeSinkConnector.TOPICS_CONFIG;
 	private static final String TOPICS_DOC = "List of Kafka topics";
@@ -51,18 +52,13 @@ public class ConnectorConfig extends AbstractConfig {
 	private static final String POLICY_RECORD_EXISTS_ACTION_DOC = "Write Policy: How to handle writes when the record already exists";
 	private static final String POLICY_RECORD_EXISTS_ACTION_DEFAULT = "update";
 	private static final Validator POLICY_RECORD_EXISTS_ACTION_VALIDATOR = ValidString.in("create_only", "update", "update_only", "replace", "replace_only");
-	
-	public static final String MAPPER_CLASS_CONFIG = "mapper.class";
-	private static final String MAPPER_CLASS_DOC = "Record mapper class";
-	private static final Class<? extends RecordMapper> MAPPER_DEFAULT = JsonObjectMapper.class;
 
 	public static ConfigDef baseConfigDef() {
 		return new ConfigDef()
 				.define(TOPICS_CONFIG, Type.LIST, Importance.HIGH, TOPICS_DOC)
 				.define(HOSTNAME_CONFIG, Type.STRING, Importance.HIGH, HOSTNAME_DOC)
 				.define(PORT_CONFIG, Type.INT, PORT_DEFAULT, PORT_VALIDATOR, Importance.LOW, PORT_DOC)
-				.define(POLICY_RECORD_EXISTS_ACTION_CONFIG, Type.STRING, POLICY_RECORD_EXISTS_ACTION_DEFAULT, POLICY_RECORD_EXISTS_ACTION_VALIDATOR, Importance.LOW, POLICY_RECORD_EXISTS_ACTION_DOC)
-				.define(MAPPER_CLASS_CONFIG, Type.CLASS, MAPPER_DEFAULT, Importance.HIGH, MAPPER_CLASS_DOC);
+				.define(POLICY_RECORD_EXISTS_ACTION_CONFIG, Type.STRING, POLICY_RECORD_EXISTS_ACTION_DEFAULT, POLICY_RECORD_EXISTS_ACTION_VALIDATOR, Importance.LOW, POLICY_RECORD_EXISTS_ACTION_DOC);
 	}
 
 	static ConfigDef config = baseConfigDef();
@@ -112,7 +108,8 @@ public class ConnectorConfig extends AbstractConfig {
 	}
 	
 	public RecordMapper getRecordMapper() {
-		RecordMapper mapper = getConfiguredInstance(MAPPER_CLASS_CONFIG, RecordMapper.class);
+		BaseMapperConfig config = new BaseMapperConfig(originalsWithPrefix(MAPPER_CONFIG_PREFIX));
+		RecordMapper mapper = config.getMapperInstance();
 		mapper.setTopicConfigs(getTopicConfigs());
 		return mapper;
 	}

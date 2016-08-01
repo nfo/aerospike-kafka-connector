@@ -47,7 +47,7 @@ public class StructMapper extends AbstractRecordMapper {
 			throw new MappingError("Missing record schema");
 		}
 		if (schema.type() != Type.STRUCT) {
-			throw new MappingError("Unsupported schema type: " + schema.type());
+			throw new MappingError("Unsupported schema type - expected Struct, got " + schema.type());
 		}
 		return binsFromStruct((Struct)value);
 	}

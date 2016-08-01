@@ -36,7 +36,7 @@ public class JsonObjectMapper extends AbstractRecordMapper {
 	private Bin[] binsFromRecord(SinkRecord record) throws MappingError {
 		Object value = record.value();
 		if (!(value instanceof Map)) {
-			throw new MappingError("Unsupported record type");
+			throw new MappingError("Unsupported record type - expected to get map instance (JSON Object)");
 		}
 		return binsFromMap((Map<?, ?>)value);
 	}

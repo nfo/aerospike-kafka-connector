@@ -39,7 +39,7 @@ public class AerospikeSinkConnector extends SinkConnector {
 
 	@Override
 	public ConfigDef config() {
-		return AerospikeSinkConnectorConfig.config;
+		return ConnectorConfig.config;
 	}
 
 	@Override
@@ -47,7 +47,7 @@ public class AerospikeSinkConnector extends SinkConnector {
 		log.info("Starting {} connector", this.getClass().getName());
 		try {
 			configProperties = props;
-			new AerospikeSinkConnectorConfig(props);
+			new ConnectorConfig(props);
 		} catch (ConfigException e) {
 			throw new ConnectException("Could not start AerospikeSinkConnector due to configuration error", e);
 		}

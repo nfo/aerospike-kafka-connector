@@ -14,11 +14,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.aerospike.kafka.connect.sink;
+package com.aerospike.kafka.connect.mapper;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
@@ -30,61 +29,27 @@ import org.slf4j.LoggerFactory;
 
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
-import com.aerospike.kafka.connect.errors.ConversionError;
 
-public class RecordConverter {
+public class StructMapper extends AbstractRecordMapper {
 
-	private static final String DEFAULT_KEY = "value"; 
-	private static final Logger log = LoggerFactory.getLogger(RecordConverter.class);
+	private static final Logger log = LoggerFactory.getLogger(StructMapper.class);
 
-	public KeyAndBins convertRecord(SinkRecord record, String namespace, String set) throws ConversionError {
-		Key key = keyFromRecord(record, namespace, set);
+	public KeyAndBins convertRecord(SinkRecord record) throws MappingError {
+		Key key = keyFromRecord(record);
 		Bin[] bins = binsFromRecord(record);
 		return new KeyAndBins(key, bins);
 	}
 
-	private Key keyFromRecord(SinkRecord record, String namespace, String set) throws ConversionError {
-		Object key = record.key();
-		if (key instanceof String) {
-			return new Key(namespace, set, (String)key);
-		} else {
-			throw new ConversionError(String.format("Unsupported key: {}", key));
-		}
-	}
-
-	private Bin[] binsFromRecord(SinkRecord record) throws ConversionError {
-		Bin[] bins;
+	private Bin[] binsFromRecord(SinkRecord record) throws MappingError {
 		Object value = record.value();
 		Schema schema = record.valueSchema();
-		if (schema != null) {
-			bins = binsFromValueWithSchema(value, schema);
-		} else {
-			bins = binsFromValue(value);
+		if (schema == null) {
+			throw new MappingError("Missing record schema");
 		}
-		return bins;
-	}
-	
-	private Bin[] binsFromValue(Object value) {
-		List<Bin> bins = new ArrayList<Bin>();
-		if (value instanceof Map) {
-			Map<?, ?> map = (Map<?, ?>)value;
-			for (Map.Entry<?, ?>entry : map.entrySet()) {
-				bins.add(new Bin(entry.getKey().toString(), entry.getValue()));
-			}
-		} else {
-			bins.add(new Bin(DEFAULT_KEY, value));
+		if (schema.type() != Type.STRUCT) {
+			throw new MappingError("Unsupported schema type: " + schema.type());
 		}
-		return bins.toArray(new Bin[0]);
-	}
-
-	private Bin[] binsFromValueWithSchema(Object value, Schema schema) throws ConversionError {
-		Bin[] bins;
-		if (schema.type() == Type.STRUCT) {
-			bins = binsFromStruct((Struct)value);
-		} else {
-			bins = new Bin[] { new Bin(DEFAULT_KEY, value) };
-		}
-		return bins;
+		return binsFromStruct((Struct)value);
 	}
 	
 	private Bin[] binsFromStruct(Struct struct) {

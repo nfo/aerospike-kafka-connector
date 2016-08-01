@@ -14,24 +14,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.aerospike.kafka.connect.errors;
+package com.aerospike.kafka.connect.mapper;
 
-public class ConversionError extends Exception {
+public class MappingError extends Exception {
 
 	private static final long serialVersionUID = -6254341864909680037L;
 
-	public ConversionError() {
+	public MappingError() {
 	}
 
-	public ConversionError(String message) {
+	public MappingError(String message) {
 		super(message);
 	}
 
-	public ConversionError(Throwable cause) {
+	public MappingError(Throwable cause) {
 		super(cause);
 	}
 
-	public ConversionError(String message, Throwable cause) {
+	public MappingError(String message, Throwable cause) {
 		super(message, cause);
 	}
 }

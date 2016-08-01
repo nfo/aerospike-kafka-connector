@@ -34,19 +34,19 @@ import com.aerospike.client.Key;
 import com.aerospike.client.policy.ClientPolicy;
 import com.aerospike.client.policy.RecordExistsAction;
 import com.aerospike.client.policy.WritePolicy;
-import com.aerospike.kafka.connect.errors.ConversionError;
+import com.aerospike.kafka.connect.mapper.KeyAndBins;
+import com.aerospike.kafka.connect.mapper.MappingError;
+import com.aerospike.kafka.connect.mapper.RecordMapper;
 
 public class AerospikeSinkTask extends SinkTask {
 
 	private static final Logger log = LoggerFactory.getLogger(AerospikeSinkTask.class);
 	
-	private RecordConverter converter;
+	private RecordMapper mapper;
 	private AerospikeClient client;
 	private WritePolicy writePolicy;
-	private Map<String, TopicConfig> topicConfigs;
 
 	public AerospikeSinkTask() {
-		converter = new RecordConverter();
 	}
 
 	public String version() {
@@ -62,17 +62,13 @@ public class AerospikeSinkTask extends SinkTask {
 	@Override
 	public void put(Collection<SinkRecord> sinkRecords) {
 		for (SinkRecord record : sinkRecords) {
-			String topic = record.topic();
-			TopicConfig config = topicConfigs.get(topic);
-			String namespace = config.getNamespace();
-			String set = config.getSet();
 			try {
-				KeyAndBins keyAndBins = converter.convertRecord(record, namespace, set);
+				KeyAndBins keyAndBins = mapper.convertRecord(record);
 				Key key = keyAndBins.getKey();
 				Bin[] bins = keyAndBins.getBins();
 				log.trace("Writing record for key {}: {}", key, bins);
 				client.put(writePolicy, key, bins);
-			} catch (ConversionError e) {
+			} catch (MappingError e) {
 				log.error("Error converting record", e);
 			} catch (AerospikeException e) {
 				log.error("Error writing to record", e);
@@ -83,7 +79,7 @@ public class AerospikeSinkTask extends SinkTask {
 	@Override
 	public void start(Map<String, String> props) {
 		log.trace("Starting {} task with config: {}", this.getClass().getName(), props);
-		AerospikeSinkConnectorConfig config = new AerospikeSinkConnectorConfig(props);
+		ConnectorConfig config = new ConnectorConfig(props);
 		try {
 			String hostname = config.getHostname();
 			int port = config.getPort();
@@ -94,7 +90,7 @@ public class AerospikeSinkTask extends SinkTask {
 		}
 
 		writePolicy = createWritePolicy(config);
-		topicConfigs = config.getTopicConfigs();
+		mapper = config.getRecordMapper();
 	}
 
 	@Override
@@ -102,7 +98,7 @@ public class AerospikeSinkTask extends SinkTask {
 		log.trace("Stopping {} task", this.getClass().getName());
 	}
 
-	private WritePolicy createWritePolicy(AerospikeSinkConnectorConfig config) {
+	private WritePolicy createWritePolicy(ConnectorConfig config) {
 		WritePolicy policy = new WritePolicy();
 		RecordExistsAction action = config.getPolicyRecordExistsAction();
 		if (action != null) {

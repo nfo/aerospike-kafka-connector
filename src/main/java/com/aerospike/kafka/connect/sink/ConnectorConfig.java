@@ -32,10 +32,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.aerospike.client.policy.RecordExistsAction;
+import com.aerospike.kafka.connect.mapper.JsonObjectMapper;
+import com.aerospike.kafka.connect.mapper.RecordMapper;
 
-public class AerospikeSinkConnectorConfig extends AbstractConfig {
+public class ConnectorConfig extends AbstractConfig {
 	
-	private static final Logger log = LoggerFactory.getLogger(AerospikeSinkConnectorConfig.class);
+	private static final Logger log = LoggerFactory.getLogger(ConnectorConfig.class);
 
 	public static final String TOPICS_CONFIG = AerospikeSinkConnector.TOPICS_CONFIG;
 	private static final String TOPICS_DOC = "List of Kafka topics";
@@ -52,18 +54,23 @@ public class AerospikeSinkConnectorConfig extends AbstractConfig {
 	private static final String POLICY_RECORD_EXISTS_ACTION_DOC = "Write Policy: How to handle writes when the record already exists";
 	private static final String POLICY_RECORD_EXISTS_ACTION_DEFAULT = "update";
 	private static final Validator POLICY_RECORD_EXISTS_ACTION_VALIDATOR = ValidString.in("create_only", "update", "update_only", "replace", "replace_only");
+	
+	public static final String MAPPER_CONFIG = "mapper";
+	private static final String MAPPER_DOC = "Record mapper class";
+	private static final Class<? extends RecordMapper> MAPPER_DEFAULT = JsonObjectMapper.class;
 
 	public static ConfigDef baseConfigDef() {
 		return new ConfigDef()
 				.define(TOPICS_CONFIG, Type.LIST, Importance.HIGH, TOPICS_DOC)
 				.define(HOSTNAME_CONFIG, Type.STRING, Importance.HIGH, HOSTNAME_DOC)
 				.define(PORT_CONFIG, Type.INT, PORT_DEFAULT, PORT_VALIDATOR, Importance.LOW, PORT_DOC)
-				.define(POLICY_RECORD_EXISTS_ACTION_CONFIG, Type.STRING, POLICY_RECORD_EXISTS_ACTION_DEFAULT, POLICY_RECORD_EXISTS_ACTION_VALIDATOR, Importance.LOW, POLICY_RECORD_EXISTS_ACTION_DOC);
+				.define(POLICY_RECORD_EXISTS_ACTION_CONFIG, Type.STRING, POLICY_RECORD_EXISTS_ACTION_DEFAULT, POLICY_RECORD_EXISTS_ACTION_VALIDATOR, Importance.LOW, POLICY_RECORD_EXISTS_ACTION_DOC)
+				.define(MAPPER_CONFIG, Type.CLASS, MAPPER_DEFAULT, Importance.HIGH, MAPPER_DOC);
 	}
 
 	static ConfigDef config = baseConfigDef();
 
-	public AerospikeSinkConnectorConfig(Map<String, String> props) {
+	public ConnectorConfig(Map<String, String> props) {
 		super(config, props);
 	}
 	
@@ -120,6 +127,12 @@ public class AerospikeSinkConnectorConfig extends AbstractConfig {
 			topicConfigs.put(topic, config);
 		}
 		return topicConfigs;
+	}
+	
+	public RecordMapper getRecordMapper() {
+		RecordMapper mapper = getConfiguredInstance("mapper", RecordMapper.class);
+		mapper.setTopicConfigs(getTopicConfigs());
+		return mapper;
 	}
 
 }

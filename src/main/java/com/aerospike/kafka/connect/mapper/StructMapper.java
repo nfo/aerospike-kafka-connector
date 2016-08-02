@@ -23,6 +23,7 @@ import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Schema.Type;
 import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,11 +37,15 @@ public class StructMapper extends AbstractRecordMapper {
 	private static final Logger log = LoggerFactory.getLogger(StructMapper.class);
 
 	public KeyAndBins convertRecord(SinkRecord record) throws MappingError {
-		Struct value = asStruct(record.value(), record.valueSchema());
-		TopicConfig topicConfig = getTopicConfig(record);
-		Key key = keyFromRecord(value, record.key(), topicConfig);
-		Bin[] bins = binsFromStruct(value);
-		return new KeyAndBins(key, bins);
+		try {
+			Struct value = asStruct(record.value(), record.valueSchema());
+			TopicConfig topicConfig = getTopicConfig(record);
+			Key key = keyFromRecord(value, record.key(), topicConfig);
+			Bin[] bins = binsFromStruct(value);
+			return new KeyAndBins(key, bins);
+		} catch (DataException e) {
+			throw new MappingError("Unable to map record", e);
+		}
 	}
 
 	private Struct asStruct(Object value, Schema schema) throws MappingError {

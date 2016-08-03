@@ -26,6 +26,8 @@ import com.aerospike.client.AerospikeException;
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
 import com.aerospike.client.async.AsyncClient;
+import com.aerospike.client.async.AsyncClientPolicy;
+import com.aerospike.client.async.MaxCommandAction;
 import com.aerospike.client.listener.WriteListener;
 import com.aerospike.client.policy.RecordExistsAction;
 import com.aerospike.client.policy.WritePolicy;
@@ -34,20 +36,23 @@ import com.aerospike.kafka.connect.mapper.KeyAndBins;
 public class AsyncWriter implements WriteListener {
 
 	// TODO: make limit & sleep interval configurable
-	private static final int MAX_ASYNC_TRANSACTIONS = 300;
+	private static final int MAX_COMMANDS = 300;
 	private static final long SLEEP_INTERVAL = 10;
 
 	private static final Logger log = LoggerFactory.getLogger(AsyncWriter.class);
 
 	private AsyncClient client;
 	private WritePolicy writePolicy;
-	private AtomicCounter inFlight = new AtomicCounter(MAX_ASYNC_TRANSACTIONS, SLEEP_INTERVAL);
+	private AtomicCounter inFlight = new AtomicCounter(SLEEP_INTERVAL);
 
 	public AsyncWriter(ConnectorConfig config) {
 		try {
 			String hostname = config.getHostname();
 			int port = config.getPort();
-			client = new AsyncClient(hostname, port);
+			AsyncClientPolicy policy = new AsyncClientPolicy();
+			policy.asyncMaxCommandAction = MaxCommandAction.BLOCK;
+			policy.asyncMaxCommands = MAX_COMMANDS;
+			client = new AsyncClient(policy, hostname, port);
 		} catch (AerospikeException e) {
 			throw new ConnectException("Error connecting to Aerospike cluster", e);
 		}
@@ -88,27 +93,16 @@ public class AsyncWriter implements WriteListener {
 	}
 	
 	class AtomicCounter {
-		private final int limit;
 		private final long sleepMs;
 		private AtomicInteger counter;
 		
-		public AtomicCounter(int limit, long sleepMs) {
-			this.limit = limit;
+		public AtomicCounter(long sleepMs) {
 			this.sleepMs = sleepMs;
 			counter = new AtomicInteger(0);
 		}
 		
 		public void incr() {
-			try {
-				int count;
-				while ((count = counter.get()) >= limit) {
-					log.trace("Waiting " + sleepMs + "ms for counter to fall below " + limit + " - current: " + count);
-					Thread.sleep(sleepMs);
-				}
-				counter.incrementAndGet();
-			} catch (InterruptedException e) {
-				throw new ConnectException(e);
-			}
+			counter.incrementAndGet();
 		}
 		
 		public void decr() {

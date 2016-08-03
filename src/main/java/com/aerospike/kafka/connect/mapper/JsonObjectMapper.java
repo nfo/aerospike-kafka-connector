@@ -48,11 +48,19 @@ public class JsonObjectMapper extends AbstractRecordMapper {
 		String set = topicConfig.getSet();
 		Object userKey = recordKey;
 		BaseMapperConfig config = getConfig();
-		if (config.getSetField() != null) {
-			set = recordMap.get(config.getSetField()).toString();
+		String setField = config.getSetField();
+		if (setField != null) {
+			if (!recordMap.containsKey(setField)) {
+				throw new MappingError("Record is missing " + setField + " field - cannot determine Set name.");
+			}
+			set = recordMap.get(setField).toString();
 		}
-		if (config.getKeyField() != null) {
-			userKey = recordMap.get(config.getKeyField());
+		String keyField = config.getKeyField();
+		if (keyField != null) {
+			if (!recordMap.containsKey(keyField)) {
+				throw new MappingError("Record is missing " + keyField + " field - cannot determine Key value.");
+			}
+			userKey = recordMap.get(keyField);
 		}
 		Key key = createKey(namespace, set, userKey, config.getKeyType());
 		return key;

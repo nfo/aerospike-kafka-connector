@@ -21,7 +21,7 @@ public class BaseMapperConfig extends AbstractConfig {
 	public static final String KEY_TYPE_CONFIG = "key_type";
 	private static final String KEY_TYPE_DOC = "Type of the key";
 	private static final String KEY_TYPE_DEFAULT = "string";
-	private static final Validator KEY_TYPE_VALIDATOR = ValidString.in("string", "integer", "bytes");
+	private static final Validator KEY_TYPE_VALIDATOR = ValidString.in("string", "integer", "long", "bytes");
 
 	public static final String SET_FIELD_CONFIG = "set_field";
 	private static final String SET_FIELD_DOC = "Name of the record field that contains the set name";

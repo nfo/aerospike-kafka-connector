@@ -37,6 +37,8 @@ public abstract class AbstractRecordMapper implements RecordMapper, Configurable
 		case "string":
 			return new Key(namespace, set, (String)userKey);
 		case "integer":
+			return new Key(namespace, set, (int)userKey);
+		case "long":
 			return new Key(namespace, set, (long)userKey);
 		case "bytes":
 			return new Key(namespace, set, (byte[])userKey);

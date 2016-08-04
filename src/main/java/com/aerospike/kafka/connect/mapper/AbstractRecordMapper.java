@@ -33,18 +33,22 @@ public abstract class AbstractRecordMapper implements RecordMapper, Configurable
 	}
 
 	protected Key createKey(String namespace, String set, Object userKey, String keyType) throws MappingError {
-		switch(keyType) {
-		case "string":
-			return new Key(namespace, set, (String)userKey);
-		case "integer":
-			return new Key(namespace, set, (int)userKey);
-		case "long":
-			return new Key(namespace, set, (long)userKey);
-		case "bytes":
-			return new Key(namespace, set, (byte[])userKey);
-		default:
-			// This should never happen if the configuration is validated!
-			throw new MappingError("Unsupported key type: " + keyType);
+		try {
+			switch(keyType) {
+			case "string":
+				return new Key(namespace, set, (String)userKey);
+			case "integer":
+				return new Key(namespace, set, (int)userKey);
+			case "long":
+				return new Key(namespace, set, (long)userKey);
+			case "bytes":
+				return new Key(namespace, set, (byte[])userKey);
+			default:
+				// This should never happen if the configuration is validated!
+				throw new MappingError("Unsupported key type: " + keyType);
+			}
+		} catch (ClassCastException e) {
+			throw new MappingError("Error mapping record key to type " + keyType, e);
 		}
 	}
 

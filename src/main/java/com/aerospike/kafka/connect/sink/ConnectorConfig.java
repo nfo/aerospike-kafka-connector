@@ -29,13 +29,12 @@ import org.apache.kafka.common.config.ConfigDef.ValidString;
 import org.apache.kafka.common.config.ConfigDef.Validator;
 import org.apache.kafka.common.config.ConfigException;
 import com.aerospike.client.policy.RecordExistsAction;
-import com.aerospike.kafka.connect.mapper.BaseMapperConfig;
-import com.aerospike.kafka.connect.mapper.RecordMapper;
+import com.aerospike.kafka.connect.data.ConverterConfig;
 
 public class ConnectorConfig extends AbstractConfig {
 
 	private static final String TOPIC_CONFIG_PREFIX = "topic.";
-	private static final String MAPPER_CONFIG_PREFIX = "mapper.";
+	private static final String CONVERTER_CONFIG_PREFIX = "mapping.";
 	
 	public static final String TOPICS_CONFIG = AerospikeSinkConnector.TOPICS_CONFIG;
 	private static final String TOPICS_DOC = "List of Kafka topics";
@@ -107,11 +106,8 @@ public class ConnectorConfig extends AbstractConfig {
 		return topicConfigs;
 	}
 	
-	public RecordMapper getRecordMapper() {
-		BaseMapperConfig config = new BaseMapperConfig(originalsWithPrefix(MAPPER_CONFIG_PREFIX));
-		RecordMapper mapper = config.getMapperInstance();
-		mapper.setTopicConfigs(getTopicConfigs());
-		return mapper;
+	public ConverterConfig getMappingConfig() {
+		return new ConverterConfig(originalsWithPrefix(CONVERTER_CONFIG_PREFIX));
 	}
 
 }

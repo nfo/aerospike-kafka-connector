@@ -1,4 +1,20 @@
-package com.aerospike.kafka.connect.mapper;
+/*
+ * Copyright 2016 Aerospike, Inc.
+ *
+ * Portions may be licensed to Aerospike, Inc. under one or more contributor
+ * license agreements WHICH ARE COMPATIBLE WITH THE APACHE LICENSE, VERSION 2.0.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.aerospike.kafka.connect.data;
 
 import static org.junit.Assert.*;
 
@@ -8,28 +24,31 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.junit.Test;
 
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
+import com.aerospike.kafka.connect.data.RecordConverter;
+import com.aerospike.kafka.connect.data.AerospikeRecord;
 import com.aerospike.kafka.connect.sink.TopicConfig;
 
-public class JsonObjectMapperTest {
+public abstract class AbstractConverterTest {
 
+	public abstract RecordConverter getConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs);
+	
+	public abstract SinkRecord createSinkRecord(String topic, Object key, Object ...keysAndValues);
+	
 	@Test
-	public void testMapStringBin() throws MappingError {
+	public void testConvertStringBin() {
+		Map<String, String> config = Collections.emptyMap();
 		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		Map<String, Object> config = new HashMap<>();
-		JsonObjectMapper subject = new JsonObjectMapper();
-		subject.configure(config);
-		subject.setTopicConfigs(topicConfigs);
+		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
 		SinkRecord record = createSinkRecord("testTopic", "testKey", "sBin", "aString");
 
-		KeyAndBins result = subject.convertRecord(record);
+		AerospikeRecord result = subject.convertRecord(record);
 
-		Bin bins[] = result.getBins();
+		Bin bins[] = result.bins();
 		assertEquals(1, bins.length);
 		Bin bin = bins[0];
 		assertEquals("sBin", bin.name);
@@ -37,17 +56,15 @@ public class JsonObjectMapperTest {
 	}
 
 	@Test
-	public void testMapIntegerBin() throws MappingError {
+	public void testConvertIntegerBin() {
+		Map<String, String> config = Collections.emptyMap();
 		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		Map<String, Object> config = new HashMap<>();
-		JsonObjectMapper subject = new JsonObjectMapper();
-		subject.configure(config);
-		subject.setTopicConfigs(topicConfigs);
+		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
 		SinkRecord record = createSinkRecord("testTopic", "testKey", "iBin", 12345);
 
-		KeyAndBins result = subject.convertRecord(record);
+		AerospikeRecord result = subject.convertRecord(record);
 
-		Bin bins[] = result.getBins();
+		Bin bins[] = result.bins();
 		assertEquals(1, bins.length);
 		Bin bin = bins[0];
 		assertEquals("iBin", bin.name);
@@ -55,17 +72,15 @@ public class JsonObjectMapperTest {
 	}
 
 	@Test
-	public void testMapDoubleBin() throws MappingError {
+	public void testConvertDoubleBin(){
+		Map<String, String> config = Collections.emptyMap();
 		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		Map<String, Object> config = new HashMap<>();
-		JsonObjectMapper subject = new JsonObjectMapper();
-		subject.configure(config);
-		subject.setTopicConfigs(topicConfigs);
+		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
 		SinkRecord record = createSinkRecord("testTopic", "testKey", "dBin", 12.345);
 
-		KeyAndBins result = subject.convertRecord(record);
+		AerospikeRecord result = subject.convertRecord(record);
 
-		Bin bins[] = result.getBins();
+		Bin bins[] = result.bins();
 		assertEquals(1, bins.length);
 		Bin bin = bins[0];
 		assertEquals("dBin", bin.name);
@@ -73,17 +88,15 @@ public class JsonObjectMapperTest {
 	}
 
 	@Test
-	public void testMapListBin() throws MappingError {
+	public void testConvertListBin() {
+		Map<String, String> config = Collections.emptyMap();
 		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		Map<String, Object> config = new HashMap<>();
-		JsonObjectMapper subject = new JsonObjectMapper();
-		subject.configure(config);
-		subject.setTopicConfigs(topicConfigs);
+		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
 		SinkRecord record = createSinkRecord("testTopic", "testKey", "lBin", Arrays.asList("aString", "anotherString"));
 
-		KeyAndBins result = subject.convertRecord(record);
+		AerospikeRecord result = subject.convertRecord(record);
 
-		Bin bins[] = result.getBins();
+		Bin bins[] = result.bins();
 		assertEquals(1, bins.length);
 		Bin bin = bins[0];
 		assertEquals("lBin", bin.name);
@@ -93,17 +106,15 @@ public class JsonObjectMapperTest {
 	}
 
 	@Test
-	public void testMapMapBin() throws MappingError {
+	public void testConvertMapBin() {
+		Map<String, String> config = Collections.emptyMap();
 		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		Map<String, Object> config = new HashMap<>();
-		JsonObjectMapper subject = new JsonObjectMapper();
-		subject.configure(config);
-		subject.setTopicConfigs(topicConfigs);
+		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
 		SinkRecord record = createSinkRecord("testTopic", "testKey", "mBin", Collections.singletonMap("aKey", "aValue"));
 
-		KeyAndBins result = subject.convertRecord(record);
+		AerospikeRecord result = subject.convertRecord(record);
 
-		Bin bins[] = result.getBins();
+		Bin bins[] = result.bins();
 		assertEquals(1, bins.length);
 		Bin bin = bins[0];
 		assertEquals("mBin", bin.name);
@@ -112,116 +123,85 @@ public class JsonObjectMapperTest {
 	}
 	
 	@Test
-	public void testMapSetName() throws MappingError {
+	public void testConvertSetName() {
+		Map<String, String> config = Collections.singletonMap(ConverterConfig.SET_FIELD_CONFIG, "bin1");
 		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		Map<String, Object> config = new HashMap<>();
-		config.put(BaseMapperConfig.SET_FIELD_CONFIG, "bin1");
-		JsonObjectMapper subject = new JsonObjectMapper();
-		subject.configure(config);
-		subject.setTopicConfigs(topicConfigs);
+		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
 		SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345);
 
-		KeyAndBins result = subject.convertRecord(record);
+		AerospikeRecord result = subject.convertRecord(record);
 
-		Key askey = result.getKey();
+		Key askey = result.key();
 		assertEquals("topicNamespace", askey.namespace);
 		assertEquals("aString", askey.setName);
 		assertEquals("testKey", askey.userKey.toString());
 	}
 	
 	@Test
-	public void testMapStringKey() throws MappingError {
+	public void testConvertStringKey() {
+		Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin1");
 		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		Map<String, Object> config = new HashMap<>();
-		config.put(BaseMapperConfig.KEY_FIELD_CONFIG, "bin1");
-		config.put(BaseMapperConfig.KEY_TYPE_CONFIG, "string");
-		JsonObjectMapper subject = new JsonObjectMapper();
-		subject.configure(config);
-		subject.setTopicConfigs(topicConfigs);
+		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
 		SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345);
 
-		KeyAndBins result = subject.convertRecord(record);
+		AerospikeRecord result = subject.convertRecord(record);
 
-		Key askey = result.getKey();
+		Key askey = result.key();
 		assertEquals("topicNamespace", askey.namespace);
 		assertEquals("topicSet", askey.setName);
 		assertEquals("aString", askey.userKey.toString());
 	}
 
 	@Test
-	public void testMapIntegerKey() throws MappingError {
+	public void testConvertIntegerKey() {
+		Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin2");
 		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		Map<String, Object> config = new HashMap<>();
-		config.put(BaseMapperConfig.KEY_FIELD_CONFIG, "bin2");
-		config.put(BaseMapperConfig.KEY_TYPE_CONFIG, "integer");
-		JsonObjectMapper subject = new JsonObjectMapper();
-		subject.configure(config);
-		subject.setTopicConfigs(topicConfigs);
+		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
 		SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345);
 
-		KeyAndBins result = subject.convertRecord(record);
+		AerospikeRecord result = subject.convertRecord(record);
 
-		Key askey = result.getKey();
+		Key askey = result.key();
 		assertEquals("topicNamespace", askey.namespace);
 		assertEquals("topicSet", askey.setName);
 		assertEquals(12345, askey.userKey.toInteger());
 	}
 
 	@Test
-	public void testMapLongKey() throws MappingError {
+	public void testConvertLongKey() {
+		Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin2");
 		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		Map<String, Object> config = new HashMap<>();
-		config.put(BaseMapperConfig.KEY_FIELD_CONFIG, "bin2");
-		config.put(BaseMapperConfig.KEY_TYPE_CONFIG, "long");
-		JsonObjectMapper subject = new JsonObjectMapper();
-		subject.configure(config);
-		subject.setTopicConfigs(topicConfigs);
+		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
 		SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345678l);
 
-		KeyAndBins result = subject.convertRecord(record);
+		AerospikeRecord result = subject.convertRecord(record);
 
-		Key askey = result.getKey();
+		Key askey = result.key();
 		assertEquals("topicNamespace", askey.namespace);
 		assertEquals("topicSet", askey.setName);
 		assertEquals(12345678l, askey.userKey.toLong());
 	}
 
 	@Test
-	public void testMapBytesKey() throws MappingError {
+	public void testConvertBytesKey() {
+		Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin2");
 		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		Map<String, Object> config = new HashMap<>();
-		config.put(BaseMapperConfig.KEY_FIELD_CONFIG, "bin2");
-		config.put(BaseMapperConfig.KEY_TYPE_CONFIG, "bytes");
-		JsonObjectMapper subject = new JsonObjectMapper();
-		subject.configure(config);
-		subject.setTopicConfigs(topicConfigs);
+		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
 		SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", new byte[] {0x01, 0x02, 0x03, 0x04});
 
-		KeyAndBins result = subject.convertRecord(record);
+		AerospikeRecord result = subject.convertRecord(record);
 
-		Key askey = result.getKey();
+		Key askey = result.key();
 		assertEquals("topicNamespace", askey.namespace);
 		assertEquals("topicSet", askey.setName);
 		assertArrayEquals(new byte[] {0x01, 0x02, 0x03, 0x04}, (byte[])askey.userKey.getObject());
 	}
-	
+
 	private Map<String, TopicConfig> createTopicConfigs(String topic, String namespace, String set) {
 		Map<String, Object> config = new HashMap<>();
 		config.put("namespace", namespace);
 		config.put("set", set);
 		return Collections.singletonMap(topic, new TopicConfig(config));
-	}
-	
-	private SinkRecord createSinkRecord(String topic, Object key, Object ...keysAndValues) {
-		int partition = 0;
-		Schema keySchema = null;
-		Schema valueSchema = null;
-		Map<Object, Object> value = new HashMap<>();
-		for (int i = 0; i < keysAndValues.length; i = i + 2) {
-			value.put(keysAndValues[i], keysAndValues[i+1]);
-		}
-		long offset = 0;
-		return new SinkRecord(topic, partition, keySchema, key, valueSchema, value, offset);
 	}
 
 }

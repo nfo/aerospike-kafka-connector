@@ -14,18 +14,32 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.aerospike.kafka.connect.mapper;
+package com.aerospike.kafka.connect.data;
 
+import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.sink.SinkRecord;
 
 import com.aerospike.kafka.connect.sink.TopicConfig;
 
-public interface RecordMapper {
-	
-	public void setTopicConfigs(Map<String, TopicConfig> configs);
-	
-	public KeyAndBins convertRecord(SinkRecord record) throws MappingError;
+public class MapConverterTest extends AbstractConverterTest {
 
+	@Override
+	public RecordConverter getConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
+		return new MapConverter(config, topicConfigs);
+	}
+
+	public SinkRecord createSinkRecord(String topic, Object key, Object ...keysAndValues) {
+		int partition = 0;
+		Schema keySchema = null;
+		Schema valueSchema = null;
+		Map<Object, Object> value = new HashMap<>();
+		for (int i = 0; i < keysAndValues.length; i = i + 2) {
+			value.put(keysAndValues[i], keysAndValues[i+1]);
+		}
+		long offset = 0;
+		return new SinkRecord(topic, partition, keySchema, key, valueSchema, value, offset);
+	}
 }

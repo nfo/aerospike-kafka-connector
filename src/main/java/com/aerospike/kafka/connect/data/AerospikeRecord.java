@@ -14,33 +14,33 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.aerospike.kafka.connect.mapper;
+package com.aerospike.kafka.connect.data;
 
 import java.util.List;
 
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
 
-public class KeyAndBins {
+public class AerospikeRecord {
 
 	private Key key;
 	private Bin[] bins;
 
-	public KeyAndBins(Key key, Bin[] bins) {
+	public AerospikeRecord(Key key, Bin[] bins) {
 		this.key = key;
 		this.bins = bins;
 	}
 	
-	public KeyAndBins(Key key, List<Bin> bins) {
+	public AerospikeRecord(Key key, List<Bin> bins) {
 		this.key = key;
 		this.bins = bins.toArray(new Bin[0]);
 	}
 
-	public Key getKey() {
+	public Key key() {
 		return key;
 	}
 	
-	public Bin[] getBins() {
+	public Bin[] bins() {
 		return bins;
 	}
 }

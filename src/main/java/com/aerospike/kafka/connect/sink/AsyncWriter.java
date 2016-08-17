@@ -31,7 +31,7 @@ import com.aerospike.client.async.MaxCommandAction;
 import com.aerospike.client.listener.WriteListener;
 import com.aerospike.client.policy.RecordExistsAction;
 import com.aerospike.client.policy.WritePolicy;
-import com.aerospike.kafka.connect.mapper.KeyAndBins;
+import com.aerospike.kafka.connect.data.AerospikeRecord;
 
 public class AsyncWriter implements WriteListener {
 
@@ -59,9 +59,9 @@ public class AsyncWriter implements WriteListener {
 		writePolicy = createWritePolicy(config);
 	}
 
-	public void write(KeyAndBins keyAndBins) {
-		Key key = keyAndBins.getKey();
-		Bin bins[] = keyAndBins.getBins();
+	public void write(AerospikeRecord record) {
+		Key key = record.key();
+		Bin bins[] = record.bins();
 		inFlight.incr();
 		client.put(writePolicy, this, key, bins);
 	}

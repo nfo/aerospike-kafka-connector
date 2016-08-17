@@ -29,15 +29,15 @@ import org.slf4j.LoggerFactory;
 import com.aerospike.client.AerospikeException;
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
-import com.aerospike.kafka.connect.mapper.KeyAndBins;
-import com.aerospike.kafka.connect.mapper.MappingError;
-import com.aerospike.kafka.connect.mapper.RecordMapper;
+import com.aerospike.kafka.connect.data.AerospikeRecord;
+import com.aerospike.kafka.connect.data.RecordConverter;
+import com.aerospike.kafka.connect.data.RecordMapperFactory;
 
 public class AerospikeSinkTask extends SinkTask {
 
 	private static final Logger log = LoggerFactory.getLogger(AerospikeSinkTask.class);
 	
-	private RecordMapper mapper;
+	private RecordMapperFactory mappers;
 	private AsyncWriter writer;
 
 	public AerospikeSinkTask() {
@@ -54,15 +54,14 @@ public class AerospikeSinkTask extends SinkTask {
 
 	@Override
 	public void put(Collection<SinkRecord> sinkRecords) {
-		for (SinkRecord record : sinkRecords) {
+		for (SinkRecord sinkRecord : sinkRecords) {
 			try {
-				KeyAndBins keyAndBins = mapper.convertRecord(record);
-				Key key = keyAndBins.getKey();
-				Bin[] bins = keyAndBins.getBins();
+				RecordConverter mapper = mappers.getMapper(sinkRecord);
+				AerospikeRecord record = mapper.convertRecord(sinkRecord);
+				Key key = record.key();
+				Bin[] bins = record.bins();
 				log.trace("Writing record for key {}: {}", key, bins);
-				writer.write(keyAndBins);
-			} catch (MappingError e) {
-				log.error("Error converting record", e);
+				writer.write(record);
 			} catch (AerospikeException e) {
 				log.error("Error writing to record", e);
 			}
@@ -73,8 +72,8 @@ public class AerospikeSinkTask extends SinkTask {
 	public void start(Map<String, String> props) {
 		log.trace("Starting {} task with config: {}", this.getClass().getName(), props);
 		ConnectorConfig config = new ConnectorConfig(props);
+		mappers = new RecordMapperFactory(config.getMappingConfig(), config.getTopicConfigs());
 		writer = new AsyncWriter(config);
-		mapper = config.getRecordMapper();
 	}
 
 	@Override

@@ -14,10 +14,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.aerospike.kafka.connect.mapper;
+package com.aerospike.kafka.connect.data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
@@ -30,47 +31,53 @@ import org.slf4j.LoggerFactory;
 
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
+import com.aerospike.client.Value;
 import com.aerospike.kafka.connect.sink.TopicConfig;
 
-public class StructMapper extends AbstractRecordMapper {
+public class StructConverter extends RecordConverter {
 
-	private static final Logger log = LoggerFactory.getLogger(StructMapper.class);
+	private static final Logger log = LoggerFactory.getLogger(StructConverter.class);
 
-	public KeyAndBins convertRecord(SinkRecord record) throws MappingError {
-		try {
-			Struct value = asStruct(record.value(), record.valueSchema());
-			TopicConfig topicConfig = getTopicConfig(record);
-			Key key = keyFromRecord(value, record.key(), topicConfig);
-			Bin[] bins = binsFromStruct(value);
-			return new KeyAndBins(key, bins);
-		} catch (DataException e) {
-			throw new MappingError("Unable to map record", e);
-		}
+	public StructConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
+		super(config, topicConfigs);
+	}
+	
+	public AerospikeRecord convertRecord(SinkRecord record) {
+		Struct value = asStruct(record.value(), record.valueSchema());
+		TopicConfig topicConfig = getTopicConfig(record);
+		Key key = keyFromRecord(value, record.key(), topicConfig);
+		Bin[] bins = binsFromStruct(value);
+		return new AerospikeRecord(key, bins);
 	}
 
-	private Struct asStruct(Object value, Schema schema) throws MappingError {
+	private Struct asStruct(Object value, Schema schema) {
 		if (schema == null) {
-			throw new MappingError("Missing record schema");
+			throw new DataException("Missing record schema");
 		}
 		if (schema.type() != Type.STRUCT) {
-			throw new MappingError("Unsupported schema type - expected Struct, got " + schema.type());
+			throw new DataException("Unsupported schema type - expected Struct, got " + schema.type());
 		}
 		return (Struct)value;
 	}
 
-	private Key keyFromRecord(Struct struct, Object recordKey, TopicConfig topicConfig) throws MappingError {
+	private Key keyFromRecord(Struct struct, Object recordKey, TopicConfig topicConfig) {
 		String namespace = topicConfig.getNamespace();
 		String set = topicConfig.getSet();
 		Object userKey = recordKey;
-		BaseMapperConfig config = getConfig();
+		ConverterConfig config = getConfig();
 		if (config.getSetField() != null) {
 			set = struct.getString(config.getSetField());
 		}
 		if (config.getKeyField() != null) {
 			userKey = struct.get(config.getKeyField());
 		}
-		Key key = createKey(namespace, set, userKey, config.getKeyType());
+		Key key = createKey(namespace, set, userKey);
 		return key;
+	}
+
+	private Key createKey(String namespace, String set, Object userKey) {
+		Value userKeyValue = Value.get(userKey);
+		return new Key(namespace, set, userKeyValue);
 	}
 
 	private Bin[] binsFromStruct(Struct struct) {

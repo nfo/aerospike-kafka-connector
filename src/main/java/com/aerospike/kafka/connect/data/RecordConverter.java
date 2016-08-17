@@ -14,24 +14,33 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.aerospike.kafka.connect.mapper;
+package com.aerospike.kafka.connect.data;
 
-public class MappingError extends Exception {
+import java.util.Map;
 
-	private static final long serialVersionUID = -6254341864909680037L;
+import org.apache.kafka.connect.sink.SinkRecord;
 
-	public MappingError() {
+import com.aerospike.kafka.connect.sink.TopicConfig;
+
+public abstract class RecordConverter {
+
+	private ConverterConfig config;
+	private Map<String, TopicConfig> topicConfigs;
+	
+	protected RecordConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
+		this.config = config;
+		this.topicConfigs = topicConfigs;
 	}
 
-	public MappingError(String message) {
-		super(message);
+	public abstract AerospikeRecord convertRecord(SinkRecord record);
+
+	public ConverterConfig getConfig() {
+		return config;
 	}
 
-	public MappingError(Throwable cause) {
-		super(cause);
+	public TopicConfig getTopicConfig(SinkRecord record) {
+		String topic = record.topic();
+		return topicConfigs.get(topic);
 	}
 
-	public MappingError(String message, Throwable cause) {
-		super(message, cause);
-	}
 }

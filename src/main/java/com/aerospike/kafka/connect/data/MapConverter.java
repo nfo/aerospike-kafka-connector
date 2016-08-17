@@ -14,56 +14,67 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.aerospike.kafka.connect.mapper;
+package com.aerospike.kafka.connect.data;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.sink.SinkRecord;
 
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
+import com.aerospike.client.Value;
 import com.aerospike.kafka.connect.sink.TopicConfig;
 
-public class JsonObjectMapper extends AbstractRecordMapper {
+public class MapConverter extends RecordConverter {
 
-	public KeyAndBins convertRecord(SinkRecord record) throws MappingError {
+	public MapConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
+		super(config, topicConfigs);
+	}
+
+	public AerospikeRecord convertRecord(SinkRecord record) {
 		Map<?, ?> value = asMap(record.value());
 		TopicConfig topicConfig = getTopicConfig(record);
 		Key key = keyFromRecord(value, record.key(), topicConfig);
 		Bin[] bins = binsFromMap(value);
-		return new KeyAndBins(key, bins);
+		return new AerospikeRecord(key, bins);
 	}
 	
-	private Map<?, ?> asMap(Object value) throws MappingError {
+	private Map<?, ?> asMap(Object value) {
 		if (value instanceof Map) {
 			return (Map<?, ?>) value;
 		}
-		throw new MappingError("Unsupported record type - expected to get map instance (JSON Object)");
+		throw new DataException("Unsupported record type - expected to get map instance");
 	}
 	
-	private Key keyFromRecord(Map<?, ?> recordMap, Object recordKey, TopicConfig topicConfig) throws MappingError {
+	private Key keyFromRecord(Map<?, ?> recordMap, Object recordKey, TopicConfig topicConfig) {
 		String namespace = topicConfig.getNamespace();
 		String set = topicConfig.getSet();
 		Object userKey = recordKey;
-		BaseMapperConfig config = getConfig();
+		ConverterConfig config = getConfig();
 		String setField = config.getSetField();
 		if (setField != null) {
 			if (!recordMap.containsKey(setField)) {
-				throw new MappingError("Record is missing " + setField + " field - cannot determine Set name.");
+				throw new DataException("Record is missing " + setField + " field - cannot determine Set name.");
 			}
 			set = recordMap.get(setField).toString();
 		}
 		String keyField = config.getKeyField();
 		if (keyField != null) {
 			if (!recordMap.containsKey(keyField)) {
-				throw new MappingError("Record is missing " + keyField + " field - cannot determine Key value.");
+				throw new DataException("Record is missing " + keyField + " field - cannot determine Key value.");
 			}
 			userKey = recordMap.get(keyField);
 		}
-		Key key = createKey(namespace, set, userKey, config.getKeyType());
+		Key key = createKey(namespace, set, userKey);
 		return key;
+	}
+
+	private Key createKey(String namespace, String set, Object userKey) {
+		Value userKeyValue = Value.get(userKey);
+		return new Key(namespace, set, userKeyValue);
 	}
 
 	private Bin[] binsFromMap(Map<?, ?> map) {

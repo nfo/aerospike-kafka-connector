@@ -8,6 +8,11 @@ for copying data between Kafka and the Aerospike NoSQL database.
 To build a development version you'll need a recent version of Kafka. You can
 build aerospike-kafka-connector with Maven using the standard lifecycle phases.
 
+### Prerequisites:
+
+* Java 1.7 or greater
+* Maven 3.0 or greater
+
 ## Contribute
 
 * Source Code: https://github.com/aerospike/aerospike-kafka-connector

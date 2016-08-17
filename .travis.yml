@@ -2,3 +2,11 @@ language: java
 jdk:
   - oraclejdk8
   - oraclejdk7
+notifications:
+  email:
+  - qe-notices@aerospike.com
+  hipchat:
+    rooms:
+      secure: H5qTvLxIBBinW4eE6D/x1+BBLUeOb+7dq3wkgSR8IUTGoBZ2bbVWwqNbKUJ1ueuKs4g9RvV7sDkG03dSze/lZJcE+bOMfIGkmBRl0InnTZdGvAs9QD2DCs6d+iNWBM9OvIPvjyTBJ2ryhmYcB2NFr2Nubl0xgdzFJA2BOAvHLK0=
+  slack:
+    secure: eTiZiYHWKgwzvR0VksJgaR3fOK4+HTT4vN+3N8/n4RUXAnzEEurvpAbwFwF0e47a5Pt1ro731Je/lgO6BXWsa8Cy/ZtuF/33VhKSaWsMopYfOcoGpGyc8GH3pz/7fnT9kz/f6ZSGpp+BV+hK8dYu3x5kKWCQ7VTq33CNEYLmcow=

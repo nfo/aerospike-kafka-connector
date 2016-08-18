@@ -27,32 +27,32 @@ import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
 import com.aerospike.client.async.AsyncClient;
 import com.aerospike.client.async.AsyncClientPolicy;
-import com.aerospike.client.async.MaxCommandAction;
 import com.aerospike.client.listener.WriteListener;
 import com.aerospike.client.policy.RecordExistsAction;
 import com.aerospike.client.policy.WritePolicy;
 import com.aerospike.kafka.connect.data.AerospikeRecord;
 
+/**
+ * The AsyncWriter handles connections to the Aerospike cluster, sending data
+ * and flush. The write sends individual request to write each record using the
+ * async client. The flush method waits until all in-flight request have been
+ * completed.
+ */
 public class AsyncWriter implements WriteListener {
-
-    // TODO: make limit & sleep interval configurable
-    private static final int MAX_COMMANDS = 300;
-    private static final long SLEEP_INTERVAL = 10;
 
     private static final Logger log = LoggerFactory.getLogger(AsyncWriter.class);
 
-    private AsyncClient client;
-    private WritePolicy writePolicy;
-    private AtomicCounter inFlight = new AtomicCounter(SLEEP_INTERVAL);
+    private final AsyncClient client;
+    private final WritePolicy writePolicy;
+    private final AtomicCounter inFlight;
 
     public AsyncWriter(ConnectorConfig config) {
         try {
             String hostname = config.getHostname();
             int port = config.getPort();
-            AsyncClientPolicy policy = new AsyncClientPolicy();
-            policy.asyncMaxCommandAction = MaxCommandAction.BLOCK;
-            policy.asyncMaxCommands = MAX_COMMANDS;
+            AsyncClientPolicy policy = createClientPolicy(config);
             client = new AsyncClient(policy, hostname, port);
+            inFlight = new AtomicCounter();
         } catch (AerospikeException e) {
             throw new ConnectException("Error connecting to Aerospike cluster", e);
         }
@@ -81,6 +81,13 @@ public class AsyncWriter implements WriteListener {
         log.trace("Successfully put key {}", key);
         inFlight.decr();
     }
+    
+    private AsyncClientPolicy createClientPolicy(ConnectorConfig config) {
+        AsyncClientPolicy policy = new AsyncClientPolicy();
+        policy.asyncMaxCommands = config.getMaxAsyncCommands();
+        policy.asyncMaxCommandAction = config.getMaxCommandAction();
+        return policy;
+    }
 
     private WritePolicy createWritePolicy(ConnectorConfig config) {
         WritePolicy policy = new WritePolicy();
@@ -93,8 +100,13 @@ public class AsyncWriter implements WriteListener {
     }
 
     class AtomicCounter {
+        private static final long DEFAULT_SLEEP_INTERVAL_MS = 1;
         private final long sleepMs;
         private AtomicInteger counter;
+
+        public AtomicCounter() {
+            this(DEFAULT_SLEEP_INTERVAL_MS);
+        }
 
         public AtomicCounter(long sleepMs) {
             this.sleepMs = sleepMs;

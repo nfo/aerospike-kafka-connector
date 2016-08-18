@@ -28,6 +28,8 @@ import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.config.ConfigDef.ValidString;
 import org.apache.kafka.common.config.ConfigDef.Validator;
 import org.apache.kafka.common.config.ConfigException;
+
+import com.aerospike.client.async.MaxCommandAction;
 import com.aerospike.client.policy.RecordExistsAction;
 import com.aerospike.kafka.connect.data.ConverterConfig;
 
@@ -53,13 +55,24 @@ public class ConnectorConfig extends AbstractConfig {
     private static final Validator POLICY_RECORD_EXISTS_ACTION_VALIDATOR = ValidString.in("create_only", "update",
             "update_only", "replace", "replace_only");
 
+    public static final String MAX_ASYNC_COMMANDS_CONFIG = "max_async_commands";
+    private static final String MAX_ASYNC_COMMANDS_DOC = "Maximum number of concurrent asynchronous client requests to the Aerospike cluster";
+    private static final int MAX_ASYNC_COMMANDS_DEFAULT = 300;
+
+    public static final String MAX_COMMAND_ACTION_CONFIG = "max_command_action";
+    private static final String MAX_COMMAND_ACTION_DOC = "How to handle cases when the asynchronous maximum number of concurrent connections have been reached";
+    private static final String MAX_COMMAND_ACTION_DEFAULT = "block";
+    private static final Validator MAX_COMMAND_ACTION_VALIDATOR = ValidString.in("accept", "block", "reject");
+
     public static ConfigDef baseConfigDef() {
         return new ConfigDef()
                 .define(TOPICS_CONFIG, Type.LIST, Importance.HIGH, TOPICS_DOC)
                 .define(HOSTNAME_CONFIG, Type.STRING, Importance.HIGH, HOSTNAME_DOC)
                 .define(PORT_CONFIG, Type.INT, PORT_DEFAULT, PORT_VALIDATOR, Importance.LOW, PORT_DOC)
                 .define(POLICY_RECORD_EXISTS_ACTION_CONFIG, Type.STRING, POLICY_RECORD_EXISTS_ACTION_DEFAULT,
-                        POLICY_RECORD_EXISTS_ACTION_VALIDATOR, Importance.LOW, POLICY_RECORD_EXISTS_ACTION_DOC);
+                        POLICY_RECORD_EXISTS_ACTION_VALIDATOR, Importance.LOW, POLICY_RECORD_EXISTS_ACTION_DOC)
+                .define(MAX_ASYNC_COMMANDS_CONFIG, Type.INT, MAX_ASYNC_COMMANDS_DEFAULT, Importance.LOW, MAX_ASYNC_COMMANDS_DOC)
+                .define(MAX_COMMAND_ACTION_CONFIG, Type.STRING, MAX_COMMAND_ACTION_DEFAULT, MAX_COMMAND_ACTION_VALIDATOR, Importance.LOW, MAX_COMMAND_ACTION_DOC);
     }
 
     static ConfigDef config = baseConfigDef();
@@ -94,6 +107,25 @@ public class ConnectorConfig extends AbstractConfig {
             throw new ConfigException(POLICY_RECORD_EXISTS_ACTION_CONFIG, action, "Unsupported policy value.");
         }
     }
+    
+    public int getMaxAsyncCommands() {
+        return getInt(MAX_ASYNC_COMMANDS_CONFIG);
+    }
+    
+    public MaxCommandAction getMaxCommandAction() {
+        String action = getString(MAX_COMMAND_ACTION_CONFIG);
+        switch (action) {
+        case "accept":
+            return MaxCommandAction.ACCEPT;
+        case "block":
+            return MaxCommandAction.BLOCK;
+        case "reject":
+            return MaxCommandAction.REJECT;
+        default:
+            // This should never happen if the configuration passes validation!
+            throw new ConfigException(MAX_COMMAND_ACTION_CONFIG, action, "Unsupported policy value.");
+        }
+    }
 
     public Map<String, TopicConfig> getTopicConfigs() {
         Map<String, TopicConfig> topicConfigs = new HashMap<>();
@@ -110,6 +142,10 @@ public class ConnectorConfig extends AbstractConfig {
 
     public ConverterConfig getMappingConfig() {
         return new ConverterConfig(originalsWithPrefix(CONVERTER_CONFIG_PREFIX));
+    }
+    
+    public static void main(String[] args) {
+        System.out.println(config.toRst());
     }
 
 }

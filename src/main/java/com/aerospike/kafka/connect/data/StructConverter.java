@@ -17,6 +17,7 @@
 package com.aerospike.kafka.connect.data;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -120,11 +121,31 @@ public class StructConverter extends RecordConverter {
             case STRING:
                 bins.add(new Bin(name, struct.getString(name)));
                 break;
-            case STRUCT: // TODO: handle nested struct values
+            case STRUCT:
+                Struct nestedStruct = struct.getStruct(name);
+                bins.add(new Bin(name, mapFromStruct(nestedStruct)));
             default:
                 log.debug("Ignoring struct field {} of unsupported type {}", name, type);
             }
         }
         return bins.toArray(new Bin[0]);
+    }
+    
+    private Map<String, Object> mapFromStruct(Struct struct) {
+        List<Field> fields = struct.schema().fields();
+        Map<String, Object> map = new HashMap<>();
+        for (Field field : fields) {
+            String name = field.name();
+            Type type = field.schema().type();
+            switch (type) {
+            case STRUCT:
+                Struct nestedStruct = struct.getStruct(name);
+                map.put(name, mapFromStruct(nestedStruct));
+                break;
+            default:
+                map.put(name, struct.get(name));
+            }
+        }
+        return map;
     }
 }

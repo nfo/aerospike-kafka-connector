@@ -199,7 +199,7 @@ public abstract class AbstractConverterTest {
         assertArrayEquals(new byte[] { 0x01, 0x02, 0x03, 0x04 }, (byte[]) askey.userKey.getObject());
     }
 
-    private Map<String, TopicConfig> createTopicConfigs(String topic, String namespace, String set) {
+    protected Map<String, TopicConfig> createTopicConfigs(String topic, String namespace, String set) {
         Map<String, Object> config = new HashMap<>();
         config.put("namespace", namespace);
         config.put("set", set);

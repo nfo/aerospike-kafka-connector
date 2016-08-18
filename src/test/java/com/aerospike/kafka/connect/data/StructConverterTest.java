@@ -16,6 +16,9 @@
  */
 package com.aerospike.kafka.connect.data;
 
+import static org.junit.Assert.*;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -26,10 +29,30 @@ import org.apache.kafka.connect.data.Schema.Type;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.sink.SinkRecord;
+import org.junit.Test;
 
+import com.aerospike.client.Bin;
 import com.aerospike.kafka.connect.sink.TopicConfig;
 
 public class StructConverterTest extends AbstractConverterTest {
+
+    @Test
+    public void testConvertStructBin() {
+        Map<String, String> config = Collections.emptyMap();
+        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
+        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        SinkRecord record = createSinkRecord("testTopic", "testKey", "structBin", buildStruct("aKey", "aValue", "intKey", 42));
+
+        AerospikeRecord result = subject.convertRecord(record);
+
+        Bin bins[] = result.bins();
+        assertEquals(1, bins.length);
+        Bin bin = bins[0];
+        assertEquals("structBin", bin.name);
+        Map<?, ?> value = (Map<?, ?>) bin.value.getObject();
+        assertEquals("aValue", value.get("aKey"));
+        assertEquals(42, value.get("intKey"));
+    }
 
     @Override
     public RecordConverter getConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
@@ -41,30 +64,39 @@ public class StructConverterTest extends AbstractConverterTest {
         if (key != null) {
             keySchema = buildObjectSchema(key);
         }
-        Schema recordSchema = buildRecordSchema(keysAndValues);
+        Struct struct = buildStruct(keysAndValues);
+        int partition = 0;
+        long offset = 0;
+        return new SinkRecord(topic, partition, keySchema, key, struct.schema(), struct, offset);
+    }
+
+    private Struct buildStruct(Object... keysAndValues) {
+        Schema recordSchema = buildStructSchema(keysAndValues);
         Struct struct = new Struct(recordSchema);
         for (int i = 0; i < keysAndValues.length; i = i + 2) {
             String fieldName = (String) keysAndValues[i];
             Object fieldValue = keysAndValues[i + 1];
             struct.put(fieldName, fieldValue);
         }
-        int partition = 0;
-        long offset = 0;
-        return new SinkRecord(topic, partition, keySchema, key, recordSchema, struct, offset);
+        return struct;
     }
 
-    private Schema buildRecordSchema(Object... keysAndValues) {
+    private Schema buildStructSchema(Object... keysAndValues) {
         SchemaBuilder builder = SchemaBuilder.struct();
         for (int i = 0; i < keysAndValues.length; i = i + 2) {
-            String fieldName = (String) keysAndValues[i];
-            Schema fieldSchema = buildObjectSchema(keysAndValues[i + 1]);
-            builder.field(fieldName, fieldSchema);
+            String name = (String) keysAndValues[i];
+            Object value = keysAndValues[i + 1];
+            Schema schema = buildObjectSchema(value);
+            builder.field(name, schema);
         }
         return builder.build();
 
     }
 
     private Schema buildObjectSchema(Object value) {
+        if (value instanceof Struct) {
+            return ((Struct) value).schema();
+        }
         Schema objectSchema;
         Type type = ConnectSchema.schemaType(value.getClass());
         switch (type) {

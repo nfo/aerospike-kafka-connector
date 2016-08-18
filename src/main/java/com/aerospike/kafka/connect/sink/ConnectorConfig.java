@@ -33,81 +33,83 @@ import com.aerospike.kafka.connect.data.ConverterConfig;
 
 public class ConnectorConfig extends AbstractConfig {
 
-	private static final String TOPIC_CONFIG_PREFIX = "topic.";
-	private static final String CONVERTER_CONFIG_PREFIX = "mapping.";
-	
-	public static final String TOPICS_CONFIG = AerospikeSinkConnector.TOPICS_CONFIG;
-	private static final String TOPICS_DOC = "List of Kafka topics";
+    private static final String TOPIC_CONFIG_PREFIX = "topic.";
+    private static final String CONVERTER_CONFIG_PREFIX = "mapping.";
 
-	public static final String HOSTNAME_CONFIG = "hostname";
-	private static final String HOSTNAME_DOC = "Aerospike Hostname";
+    public static final String TOPICS_CONFIG = AerospikeSinkConnector.TOPICS_CONFIG;
+    private static final String TOPICS_DOC = "List of Kafka topics";
 
-	public static final String PORT_CONFIG = "port";
-	private static final String PORT_DOC = "Aerospike Port";
-	private static final int PORT_DEFAULT = 3000;
-	private static final Validator PORT_VALIDATOR = Range.between(1, 65535);
+    public static final String HOSTNAME_CONFIG = "hostname";
+    private static final String HOSTNAME_DOC = "Aerospike Hostname";
 
-	public static final String POLICY_RECORD_EXISTS_ACTION_CONFIG = "policy.record_exists_action";
-	private static final String POLICY_RECORD_EXISTS_ACTION_DOC = "Write Policy: How to handle writes when the record already exists";
-	private static final String POLICY_RECORD_EXISTS_ACTION_DEFAULT = "update";
-	private static final Validator POLICY_RECORD_EXISTS_ACTION_VALIDATOR = ValidString.in("create_only", "update", "update_only", "replace", "replace_only");
+    public static final String PORT_CONFIG = "port";
+    private static final String PORT_DOC = "Aerospike Port";
+    private static final int PORT_DEFAULT = 3000;
+    private static final Validator PORT_VALIDATOR = Range.between(1, 65535);
 
-	public static ConfigDef baseConfigDef() {
-		return new ConfigDef()
-				.define(TOPICS_CONFIG, Type.LIST, Importance.HIGH, TOPICS_DOC)
-				.define(HOSTNAME_CONFIG, Type.STRING, Importance.HIGH, HOSTNAME_DOC)
-				.define(PORT_CONFIG, Type.INT, PORT_DEFAULT, PORT_VALIDATOR, Importance.LOW, PORT_DOC)
-				.define(POLICY_RECORD_EXISTS_ACTION_CONFIG, Type.STRING, POLICY_RECORD_EXISTS_ACTION_DEFAULT, POLICY_RECORD_EXISTS_ACTION_VALIDATOR, Importance.LOW, POLICY_RECORD_EXISTS_ACTION_DOC);
-	}
+    public static final String POLICY_RECORD_EXISTS_ACTION_CONFIG = "policy.record_exists_action";
+    private static final String POLICY_RECORD_EXISTS_ACTION_DOC = "Write Policy: How to handle writes when the record already exists";
+    private static final String POLICY_RECORD_EXISTS_ACTION_DEFAULT = "update";
+    private static final Validator POLICY_RECORD_EXISTS_ACTION_VALIDATOR = ValidString.in("create_only", "update",
+            "update_only", "replace", "replace_only");
 
-	static ConfigDef config = baseConfigDef();
+    public static ConfigDef baseConfigDef() {
+        return new ConfigDef()
+                .define(TOPICS_CONFIG, Type.LIST, Importance.HIGH, TOPICS_DOC)
+                .define(HOSTNAME_CONFIG, Type.STRING, Importance.HIGH, HOSTNAME_DOC)
+                .define(PORT_CONFIG, Type.INT, PORT_DEFAULT, PORT_VALIDATOR, Importance.LOW, PORT_DOC)
+                .define(POLICY_RECORD_EXISTS_ACTION_CONFIG, Type.STRING, POLICY_RECORD_EXISTS_ACTION_DEFAULT,
+                        POLICY_RECORD_EXISTS_ACTION_VALIDATOR, Importance.LOW, POLICY_RECORD_EXISTS_ACTION_DOC);
+    }
 
-	public ConnectorConfig(Map<String, String> props) {
-		super(config, props);
-	}
-	
-	public String getHostname() {
-		return getString(HOSTNAME_CONFIG);
-	}
-	
-	public int getPort() {
-		return getInt(PORT_CONFIG);
-	}
-	
-	public RecordExistsAction getPolicyRecordExistsAction() {
-		String action = getString(POLICY_RECORD_EXISTS_ACTION_CONFIG);
-		switch(action) {
-		case "create_only":
-			return RecordExistsAction.CREATE_ONLY;
-		case "replace":
-			return RecordExistsAction.REPLACE;
-		case "replace_only":
-			return RecordExistsAction.REPLACE_ONLY;
-		case "update":
-			return RecordExistsAction.UPDATE;
-		case "update_only":
-			return RecordExistsAction.UPDATE_ONLY;
-		default:
-			// This should never happen if the configuration passes validation!
-			throw new ConfigException(POLICY_RECORD_EXISTS_ACTION_CONFIG, action, "Unsupported policy value.");
-		}
-	}
-	
-	public Map<String, TopicConfig> getTopicConfigs() {
-		Map<String, TopicConfig> topicConfigs = new HashMap<>();
-		Map<String, Object> defaultTopicConfig = originalsWithPrefix(TOPIC_CONFIG_PREFIX);
-		List<String> topicNames = getList(TOPICS_CONFIG);
-		for (String topic : topicNames) {
-			String prefix = TOPIC_CONFIG_PREFIX + topic + ".";
-			Map<String, Object> config = new HashMap<>(defaultTopicConfig);
-			config.putAll(originalsWithPrefix(prefix));
-			topicConfigs.put(topic, new TopicConfig(config));
-		}
-		return topicConfigs;
-	}
-	
-	public ConverterConfig getMappingConfig() {
-		return new ConverterConfig(originalsWithPrefix(CONVERTER_CONFIG_PREFIX));
-	}
+    static ConfigDef config = baseConfigDef();
+
+    public ConnectorConfig(Map<String, String> props) {
+        super(config, props);
+    }
+
+    public String getHostname() {
+        return getString(HOSTNAME_CONFIG);
+    }
+
+    public int getPort() {
+        return getInt(PORT_CONFIG);
+    }
+
+    public RecordExistsAction getPolicyRecordExistsAction() {
+        String action = getString(POLICY_RECORD_EXISTS_ACTION_CONFIG);
+        switch (action) {
+        case "create_only":
+            return RecordExistsAction.CREATE_ONLY;
+        case "replace":
+            return RecordExistsAction.REPLACE;
+        case "replace_only":
+            return RecordExistsAction.REPLACE_ONLY;
+        case "update":
+            return RecordExistsAction.UPDATE;
+        case "update_only":
+            return RecordExistsAction.UPDATE_ONLY;
+        default:
+            // This should never happen if the configuration passes validation!
+            throw new ConfigException(POLICY_RECORD_EXISTS_ACTION_CONFIG, action, "Unsupported policy value.");
+        }
+    }
+
+    public Map<String, TopicConfig> getTopicConfigs() {
+        Map<String, TopicConfig> topicConfigs = new HashMap<>();
+        Map<String, Object> defaultTopicConfig = originalsWithPrefix(TOPIC_CONFIG_PREFIX);
+        List<String> topicNames = getList(TOPICS_CONFIG);
+        for (String topic : topicNames) {
+            String prefix = TOPIC_CONFIG_PREFIX + topic + ".";
+            Map<String, Object> config = new HashMap<>(defaultTopicConfig);
+            config.putAll(originalsWithPrefix(prefix));
+            topicConfigs.put(topic, new TopicConfig(config));
+        }
+        return topicConfigs;
+    }
+
+    public ConverterConfig getMappingConfig() {
+        return new ConverterConfig(originalsWithPrefix(CONVERTER_CONFIG_PREFIX));
+    }
 
 }

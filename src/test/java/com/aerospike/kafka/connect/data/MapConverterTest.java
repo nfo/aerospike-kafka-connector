@@ -26,20 +26,20 @@ import com.aerospike.kafka.connect.sink.TopicConfig;
 
 public class MapConverterTest extends AbstractConverterTest {
 
-	@Override
-	public RecordConverter getConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
-		return new MapConverter(config, topicConfigs);
-	}
+    @Override
+    public RecordConverter getConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
+        return new MapConverter(config, topicConfigs);
+    }
 
-	public SinkRecord createSinkRecord(String topic, Object key, Object ...keysAndValues) {
-		int partition = 0;
-		Schema keySchema = null;
-		Schema valueSchema = null;
-		Map<Object, Object> value = new HashMap<>();
-		for (int i = 0; i < keysAndValues.length; i = i + 2) {
-			value.put(keysAndValues[i], keysAndValues[i+1]);
-		}
-		long offset = 0;
-		return new SinkRecord(topic, partition, keySchema, key, valueSchema, value, offset);
-	}
+    public SinkRecord createSinkRecord(String topic, Object key, Object... keysAndValues) {
+        int partition = 0;
+        Schema keySchema = null;
+        Schema valueSchema = null;
+        Map<Object, Object> value = new HashMap<>();
+        for (int i = 0; i < keysAndValues.length; i = i + 2) {
+            value.put(keysAndValues[i], keysAndValues[i + 1]);
+        }
+        long offset = 0;
+        return new SinkRecord(topic, partition, keySchema, key, valueSchema, value, offset);
+    }
 }

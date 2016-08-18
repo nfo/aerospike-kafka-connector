@@ -25,29 +25,29 @@ import org.apache.kafka.common.config.ConfigDef.Type;
 
 public class ConverterConfig extends AbstractConfig {
 
-	public static final String KEY_FIELD_CONFIG = "key_field";
-	private static final String KEY_FIELD_DOC = "Name of the Kafka record field that contains the Aerospike user key";
+    public static final String KEY_FIELD_CONFIG = "key_field";
+    private static final String KEY_FIELD_DOC = "Name of the Kafka record field that contains the Aerospike user key";
 
-	public static final String SET_FIELD_CONFIG = "set_field";
-	private static final String SET_FIELD_DOC = "Name of the Kafka record field that contains the Aerospike set name";
-	
-	public static ConfigDef baseConfigDef() {
-		return new ConfigDef()
-				.define(KEY_FIELD_CONFIG, Type.STRING, null, Importance.MEDIUM, KEY_FIELD_DOC)
-				.define(SET_FIELD_CONFIG, Type.STRING, null, Importance.MEDIUM, SET_FIELD_DOC);
-	}
-	
-	public static ConfigDef config = baseConfigDef();
-	
-	public ConverterConfig(Map<String, ?> props) {
-		super(config, props);
-	}
-	
-	public String getKeyField() {
-		return getString(KEY_FIELD_CONFIG);
-	}
-	
-	public String getSetField() {
-		return getString(SET_FIELD_CONFIG);
-	}
+    public static final String SET_FIELD_CONFIG = "set_field";
+    private static final String SET_FIELD_DOC = "Name of the Kafka record field that contains the Aerospike set name";
+
+    public static ConfigDef baseConfigDef() {
+        return new ConfigDef()
+                .define(KEY_FIELD_CONFIG, Type.STRING, null, Importance.MEDIUM, KEY_FIELD_DOC)
+                .define(SET_FIELD_CONFIG, Type.STRING, null, Importance.MEDIUM, SET_FIELD_DOC);
+    }
+
+    public static ConfigDef config = baseConfigDef();
+
+    public ConverterConfig(Map<String, ?> props) {
+        super(config, props);
+    }
+
+    public String getKeyField() {
+        return getString(KEY_FIELD_CONFIG);
+    }
+
+    public String getSetField() {
+        return getString(SET_FIELD_CONFIG);
+    }
 }

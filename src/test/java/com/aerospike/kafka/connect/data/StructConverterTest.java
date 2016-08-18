@@ -31,59 +31,57 @@ import com.aerospike.kafka.connect.sink.TopicConfig;
 
 public class StructConverterTest extends AbstractConverterTest {
 
-	@Override
-	public RecordConverter getConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
-		return new StructConverter(config, topicConfigs);
-	}
+    @Override
+    public RecordConverter getConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
+        return new StructConverter(config, topicConfigs);
+    }
 
-	public SinkRecord createSinkRecord(String topic, Object key, Object ...keysAndValues) {
-		Schema keySchema = null;
-		if (key != null) {
-			keySchema = buildObjectSchema(key);
-		}
-		Schema recordSchema = buildRecordSchema(keysAndValues);
-		Struct struct = new Struct(recordSchema);
-		for (int i = 0; i < keysAndValues.length; i = i + 2) {
-			String fieldName = (String)keysAndValues[i];
-			Object fieldValue = keysAndValues[i+1];
-			struct.put(fieldName, fieldValue);
-		}
-		int partition = 0;
-		long offset = 0;
-		return new SinkRecord(topic, partition, keySchema, key, recordSchema, struct, offset);
-	}
-	
-	private Schema buildRecordSchema(Object ...keysAndValues) {
-		SchemaBuilder builder = SchemaBuilder.struct();
-		for (int i = 0; i < keysAndValues.length; i = i + 2) {
-			String fieldName = (String)keysAndValues[i];
-			Schema fieldSchema = buildObjectSchema(keysAndValues[i+1]);
-			builder.field(fieldName, fieldSchema);
-		}
-		return builder.build();
-		
-	}
+    public SinkRecord createSinkRecord(String topic, Object key, Object... keysAndValues) {
+        Schema keySchema = null;
+        if (key != null) {
+            keySchema = buildObjectSchema(key);
+        }
+        Schema recordSchema = buildRecordSchema(keysAndValues);
+        Struct struct = new Struct(recordSchema);
+        for (int i = 0; i < keysAndValues.length; i = i + 2) {
+            String fieldName = (String) keysAndValues[i];
+            Object fieldValue = keysAndValues[i + 1];
+            struct.put(fieldName, fieldValue);
+        }
+        int partition = 0;
+        long offset = 0;
+        return new SinkRecord(topic, partition, keySchema, key, recordSchema, struct, offset);
+    }
 
-	private Schema buildObjectSchema(Object value) {
-		Schema objectSchema;
-		Type type = ConnectSchema.schemaType(value.getClass());
-		switch(type){
-		case MAP:
-			Map<?, ?> map = (Map<?, ?>)value;
-			Entry<?, ?> mapEntry = map.entrySet().iterator().next();
-			objectSchema = SchemaBuilder.map(
-					buildObjectSchema(mapEntry.getKey()),
-					buildObjectSchema(mapEntry.getValue()));
-			break;
-		case ARRAY:
-			List<?> list = (List<?>)value;
-			Object listEntry = list.iterator().next();
-			objectSchema = SchemaBuilder.array(
-					buildObjectSchema(listEntry));
-			break;
-		default:
-			objectSchema = SchemaBuilder.type(type).build();
-		}
-		return objectSchema;
-	}
+    private Schema buildRecordSchema(Object... keysAndValues) {
+        SchemaBuilder builder = SchemaBuilder.struct();
+        for (int i = 0; i < keysAndValues.length; i = i + 2) {
+            String fieldName = (String) keysAndValues[i];
+            Schema fieldSchema = buildObjectSchema(keysAndValues[i + 1]);
+            builder.field(fieldName, fieldSchema);
+        }
+        return builder.build();
+
+    }
+
+    private Schema buildObjectSchema(Object value) {
+        Schema objectSchema;
+        Type type = ConnectSchema.schemaType(value.getClass());
+        switch (type) {
+        case MAP:
+            Map<?, ?> map = (Map<?, ?>) value;
+            Entry<?, ?> mapEntry = map.entrySet().iterator().next();
+            objectSchema = SchemaBuilder.map(buildObjectSchema(mapEntry.getKey()),
+                    buildObjectSchema(mapEntry.getValue()));
+            break;
+        case ARRAY:
+            List<?> list = (List<?>) value;
+            Object listEntry = list.iterator().next();
+            objectSchema = SchemaBuilder.array(buildObjectSchema(listEntry));
+            break;
+        default:
+            objectSchema = SchemaBuilder.type(type).build();
+        }
+        return objectSchema;
+    }
 }

@@ -23,24 +23,24 @@ import com.aerospike.client.Key;
 
 public class AerospikeRecord {
 
-	private Key key;
-	private Bin[] bins;
+    private Key key;
+    private Bin[] bins;
 
-	public AerospikeRecord(Key key, Bin[] bins) {
-		this.key = key;
-		this.bins = bins;
-	}
-	
-	public AerospikeRecord(Key key, List<Bin> bins) {
-		this.key = key;
-		this.bins = bins.toArray(new Bin[0]);
-	}
+    public AerospikeRecord(Key key, Bin[] bins) {
+        this.key = key;
+        this.bins = bins;
+    }
 
-	public Key key() {
-		return key;
-	}
-	
-	public Bin[] bins() {
-		return bins;
-	}
+    public AerospikeRecord(Key key, List<Bin> bins) {
+        this.key = key;
+        this.bins = bins.toArray(new Bin[0]);
+    }
+
+    public Key key() {
+        return key;
+    }
+
+    public Bin[] bins() {
+        return bins;
+    }
 }

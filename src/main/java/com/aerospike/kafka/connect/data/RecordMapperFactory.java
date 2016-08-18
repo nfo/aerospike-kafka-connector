@@ -29,44 +29,44 @@ import com.aerospike.kafka.connect.sink.TopicConfig;
 
 public class RecordMapperFactory {
 
-	private final ConverterConfig config;
-	private final Map<String, TopicConfig> topicConfigs;
-	private final Map<Type, RecordConverter> instances;
-	
-	public RecordMapperFactory(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
-		this.config = config;
-		this.topicConfigs = topicConfigs;
-		instances = new HashMap<>();
-	}
+    private final ConverterConfig config;
+    private final Map<String, TopicConfig> topicConfigs;
+    private final Map<Type, RecordConverter> instances;
 
-	public RecordConverter getMapper(SinkRecord record) {
-		RecordConverter mapper;
-		Type type;
-		Schema schema = record.valueSchema();
-		if (schema != null) {
-			type = schema.type();
-		} else {
-			Object value = record.value();
-			type = ConnectSchema.schemaType(value.getClass());
-		}
-		if (instances.containsKey(type)) {
-			mapper = instances.get(type);
-		} else {
-			mapper = createMapper(type);
-			instances.put(type, mapper);
-		}
-		return mapper;
-	}
-	
-	private RecordConverter createMapper(Type recordType) {
-		switch(recordType) {
-		case STRUCT:
-			return new StructConverter(config, topicConfigs);
-		case MAP:
-			return new MapConverter(config, topicConfigs);
-		default:
-			throw new DataException("No mapper for records of type " + recordType);
-		}
-	}
+    public RecordMapperFactory(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
+        this.config = config;
+        this.topicConfigs = topicConfigs;
+        instances = new HashMap<>();
+    }
+
+    public RecordConverter getMapper(SinkRecord record) {
+        RecordConverter mapper;
+        Type type;
+        Schema schema = record.valueSchema();
+        if (schema != null) {
+            type = schema.type();
+        } else {
+            Object value = record.value();
+            type = ConnectSchema.schemaType(value.getClass());
+        }
+        if (instances.containsKey(type)) {
+            mapper = instances.get(type);
+        } else {
+            mapper = createMapper(type);
+            instances.put(type, mapper);
+        }
+        return mapper;
+    }
+
+    private RecordConverter createMapper(Type recordType) {
+        switch (recordType) {
+        case STRUCT:
+            return new StructConverter(config, topicConfigs);
+        case MAP:
+            return new MapConverter(config, topicConfigs);
+        default:
+            throw new DataException("No mapper for records of type " + recordType);
+        }
+    }
 
 }

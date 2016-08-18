@@ -35,90 +35,90 @@ import com.aerospike.kafka.connect.data.AerospikeRecord;
 
 public class AsyncWriter implements WriteListener {
 
-	// TODO: make limit & sleep interval configurable
-	private static final int MAX_COMMANDS = 300;
-	private static final long SLEEP_INTERVAL = 10;
+    // TODO: make limit & sleep interval configurable
+    private static final int MAX_COMMANDS = 300;
+    private static final long SLEEP_INTERVAL = 10;
 
-	private static final Logger log = LoggerFactory.getLogger(AsyncWriter.class);
+    private static final Logger log = LoggerFactory.getLogger(AsyncWriter.class);
 
-	private AsyncClient client;
-	private WritePolicy writePolicy;
-	private AtomicCounter inFlight = new AtomicCounter(SLEEP_INTERVAL);
+    private AsyncClient client;
+    private WritePolicy writePolicy;
+    private AtomicCounter inFlight = new AtomicCounter(SLEEP_INTERVAL);
 
-	public AsyncWriter(ConnectorConfig config) {
-		try {
-			String hostname = config.getHostname();
-			int port = config.getPort();
-			AsyncClientPolicy policy = new AsyncClientPolicy();
-			policy.asyncMaxCommandAction = MaxCommandAction.BLOCK;
-			policy.asyncMaxCommands = MAX_COMMANDS;
-			client = new AsyncClient(policy, hostname, port);
-		} catch (AerospikeException e) {
-			throw new ConnectException("Error connecting to Aerospike cluster", e);
-		}
-		writePolicy = createWritePolicy(config);
-	}
+    public AsyncWriter(ConnectorConfig config) {
+        try {
+            String hostname = config.getHostname();
+            int port = config.getPort();
+            AsyncClientPolicy policy = new AsyncClientPolicy();
+            policy.asyncMaxCommandAction = MaxCommandAction.BLOCK;
+            policy.asyncMaxCommands = MAX_COMMANDS;
+            client = new AsyncClient(policy, hostname, port);
+        } catch (AerospikeException e) {
+            throw new ConnectException("Error connecting to Aerospike cluster", e);
+        }
+        writePolicy = createWritePolicy(config);
+    }
 
-	public void write(AerospikeRecord record) {
-		Key key = record.key();
-		Bin bins[] = record.bins();
-		inFlight.incr();
-		client.put(writePolicy, this, key, bins);
-	}
+    public void write(AerospikeRecord record) {
+        Key key = record.key();
+        Bin[] bins = record.bins();
+        inFlight.incr();
+        client.put(writePolicy, this, key, bins);
+    }
 
-	public void flush() {
-		inFlight.waitUntilZero();
-	}
+    public void flush() {
+        inFlight.waitUntilZero();
+    }
 
-	@Override
-	public void onFailure(AerospikeException e) {
-		log.error("Error writing record", e);
-		inFlight.decr();
-	}
+    @Override
+    public void onFailure(AerospikeException e) {
+        log.error("Error writing record", e);
+        inFlight.decr();
+    }
 
-	@Override
-	public void onSuccess(Key key) {
-		log.trace("Successfully put key {}", key);
-		inFlight.decr();
-	}
+    @Override
+    public void onSuccess(Key key) {
+        log.trace("Successfully put key {}", key);
+        inFlight.decr();
+    }
 
-	private WritePolicy createWritePolicy(ConnectorConfig config) {
-		WritePolicy policy = new WritePolicy();
-		RecordExistsAction action = config.getPolicyRecordExistsAction();
-		if (action != null) {
-			policy.recordExistsAction = action;
-		}
-		log.trace("Write Policy: recordExistsAction={}", policy.recordExistsAction);
-		return policy;
-	}
-	
-	class AtomicCounter {
-		private final long sleepMs;
-		private AtomicInteger counter;
-		
-		public AtomicCounter(long sleepMs) {
-			this.sleepMs = sleepMs;
-			counter = new AtomicInteger(0);
-		}
-		
-		public void incr() {
-			counter.incrementAndGet();
-		}
-		
-		public void decr() {
-			counter.decrementAndGet();
-		}
-		
-		public void waitUntilZero() {
-			try {
-				int count;
-				while ((count = counter.get()) > 0) {
-					log.trace("Waiting " + sleepMs + "ms for counter to reach zero - current: " + count);
-					Thread.sleep(sleepMs);
-				}
-			} catch (InterruptedException e) {
-				throw new ConnectException(e);
-			}
-		}
-	}
+    private WritePolicy createWritePolicy(ConnectorConfig config) {
+        WritePolicy policy = new WritePolicy();
+        RecordExistsAction action = config.getPolicyRecordExistsAction();
+        if (action != null) {
+            policy.recordExistsAction = action;
+        }
+        log.trace("Write Policy: recordExistsAction={}", policy.recordExistsAction);
+        return policy;
+    }
+
+    class AtomicCounter {
+        private final long sleepMs;
+        private AtomicInteger counter;
+
+        public AtomicCounter(long sleepMs) {
+            this.sleepMs = sleepMs;
+            counter = new AtomicInteger(0);
+        }
+
+        public void incr() {
+            counter.incrementAndGet();
+        }
+
+        public void decr() {
+            counter.decrementAndGet();
+        }
+
+        public void waitUntilZero() {
+            try {
+                int count;
+                while ((count = counter.get()) > 0) {
+                    log.trace("Waiting " + sleepMs + "ms for counter to reach zero - current: " + count);
+                    Thread.sleep(sleepMs);
+                }
+            } catch (InterruptedException e) {
+                throw new ConnectException(e);
+            }
+        }
+    }
 }

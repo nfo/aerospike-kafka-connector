@@ -35,49 +35,49 @@ import com.aerospike.kafka.connect.data.RecordMapperFactory;
 
 public class AerospikeSinkTask extends SinkTask {
 
-	private static final Logger log = LoggerFactory.getLogger(AerospikeSinkTask.class);
-	
-	private RecordMapperFactory mappers;
-	private AsyncWriter writer;
+    private static final Logger log = LoggerFactory.getLogger(AerospikeSinkTask.class);
 
-	public AerospikeSinkTask() {
-	}
+    private RecordMapperFactory mappers;
+    private AsyncWriter writer;
 
-	public String version() {
-		return new AerospikeSinkConnector().version();
-	}
+    public AerospikeSinkTask() {
+    }
 
-	@Override
-	public void flush(Map<TopicPartition, OffsetAndMetadata> offsets) {
-		writer.flush();
-	}
+    public String version() {
+        return new AerospikeSinkConnector().version();
+    }
 
-	@Override
-	public void put(Collection<SinkRecord> sinkRecords) {
-		for (SinkRecord sinkRecord : sinkRecords) {
-			try {
-				RecordConverter mapper = mappers.getMapper(sinkRecord);
-				AerospikeRecord record = mapper.convertRecord(sinkRecord);
-				Key key = record.key();
-				Bin[] bins = record.bins();
-				log.trace("Writing record for key {}: {}", key, bins);
-				writer.write(record);
-			} catch (AerospikeException e) {
-				log.error("Error writing to record", e);
-			}
-		}
-	}
+    @Override
+    public void flush(Map<TopicPartition, OffsetAndMetadata> offsets) {
+        writer.flush();
+    }
 
-	@Override
-	public void start(Map<String, String> props) {
-		log.trace("Starting {} task with config: {}", this.getClass().getName(), props);
-		ConnectorConfig config = new ConnectorConfig(props);
-		mappers = new RecordMapperFactory(config.getMappingConfig(), config.getTopicConfigs());
-		writer = new AsyncWriter(config);
-	}
+    @Override
+    public void put(Collection<SinkRecord> sinkRecords) {
+        for (SinkRecord sinkRecord : sinkRecords) {
+            try {
+                RecordConverter mapper = mappers.getMapper(sinkRecord);
+                AerospikeRecord record = mapper.convertRecord(sinkRecord);
+                Key key = record.key();
+                Bin[] bins = record.bins();
+                log.trace("Writing record for key {}: {}", key, bins);
+                writer.write(record);
+            } catch (AerospikeException e) {
+                log.error("Error writing to record", e);
+            }
+        }
+    }
 
-	@Override
-	public void stop() {
-		log.trace("Stopping {} task", this.getClass().getName());
-	}
+    @Override
+    public void start(Map<String, String> props) {
+        log.trace("Starting {} task with config: {}", this.getClass().getName(), props);
+        ConnectorConfig config = new ConnectorConfig(props);
+        mappers = new RecordMapperFactory(config.getMappingConfig(), config.getTopicConfigs());
+        writer = new AsyncWriter(config);
+    }
+
+    @Override
+    public void stop() {
+        log.trace("Stopping {} task", this.getClass().getName());
+    }
 }

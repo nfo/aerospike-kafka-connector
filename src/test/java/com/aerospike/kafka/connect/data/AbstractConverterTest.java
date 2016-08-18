@@ -35,173 +35,175 @@ import com.aerospike.kafka.connect.sink.TopicConfig;
 
 public abstract class AbstractConverterTest {
 
-	public abstract RecordConverter getConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs);
-	
-	public abstract SinkRecord createSinkRecord(String topic, Object key, Object ...keysAndValues);
-	
-	@Test
-	public void testConvertStringBin() {
-		Map<String, String> config = Collections.emptyMap();
-		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
-		SinkRecord record = createSinkRecord("testTopic", "testKey", "sBin", "aString");
+    public abstract RecordConverter getConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs);
 
-		AerospikeRecord result = subject.convertRecord(record);
+    public abstract SinkRecord createSinkRecord(String topic, Object key, Object... keysAndValues);
 
-		Bin bins[] = result.bins();
-		assertEquals(1, bins.length);
-		Bin bin = bins[0];
-		assertEquals("sBin", bin.name);
-		assertEquals("aString", bin.value.toString());
-	}
+    @Test
+    public void testConvertStringBin() {
+        Map<String, String> config = Collections.emptyMap();
+        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
+        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        SinkRecord record = createSinkRecord("testTopic", "testKey", "sBin", "aString");
 
-	@Test
-	public void testConvertIntegerBin() {
-		Map<String, String> config = Collections.emptyMap();
-		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
-		SinkRecord record = createSinkRecord("testTopic", "testKey", "iBin", 12345);
+        AerospikeRecord result = subject.convertRecord(record);
 
-		AerospikeRecord result = subject.convertRecord(record);
+        Bin bins[] = result.bins();
+        assertEquals(1, bins.length);
+        Bin bin = bins[0];
+        assertEquals("sBin", bin.name);
+        assertEquals("aString", bin.value.toString());
+    }
 
-		Bin bins[] = result.bins();
-		assertEquals(1, bins.length);
-		Bin bin = bins[0];
-		assertEquals("iBin", bin.name);
-		assertEquals(12345, bin.value.toInteger());
-	}
+    @Test
+    public void testConvertIntegerBin() {
+        Map<String, String> config = Collections.emptyMap();
+        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
+        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        SinkRecord record = createSinkRecord("testTopic", "testKey", "iBin", 12345);
 
-	@Test
-	public void testConvertDoubleBin(){
-		Map<String, String> config = Collections.emptyMap();
-		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
-		SinkRecord record = createSinkRecord("testTopic", "testKey", "dBin", 12.345);
+        AerospikeRecord result = subject.convertRecord(record);
 
-		AerospikeRecord result = subject.convertRecord(record);
+        Bin bins[] = result.bins();
+        assertEquals(1, bins.length);
+        Bin bin = bins[0];
+        assertEquals("iBin", bin.name);
+        assertEquals(12345, bin.value.toInteger());
+    }
 
-		Bin bins[] = result.bins();
-		assertEquals(1, bins.length);
-		Bin bin = bins[0];
-		assertEquals("dBin", bin.name);
-		assertEquals(Double.valueOf(12.345), (Double)bin.value.getObject());
-	}
+    @Test
+    public void testConvertDoubleBin() {
+        Map<String, String> config = Collections.emptyMap();
+        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
+        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        SinkRecord record = createSinkRecord("testTopic", "testKey", "dBin", 12.345);
 
-	@Test
-	public void testConvertListBin() {
-		Map<String, String> config = Collections.emptyMap();
-		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
-		SinkRecord record = createSinkRecord("testTopic", "testKey", "lBin", Arrays.asList("aString", "anotherString"));
+        AerospikeRecord result = subject.convertRecord(record);
 
-		AerospikeRecord result = subject.convertRecord(record);
+        Bin bins[] = result.bins();
+        assertEquals(1, bins.length);
+        Bin bin = bins[0];
+        assertEquals("dBin", bin.name);
+        assertEquals(Double.valueOf(12.345), (Double) bin.value.getObject());
+    }
 
-		Bin bins[] = result.bins();
-		assertEquals(1, bins.length);
-		Bin bin = bins[0];
-		assertEquals("lBin", bin.name);
-		List<?> value = (List<?>)bin.value.getObject();
-		assertEquals("aString", value.get(0));
-		assertEquals("anotherString", value.get(1));
-	}
+    @Test
+    public void testConvertListBin() {
+        Map<String, String> config = Collections.emptyMap();
+        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
+        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        SinkRecord record = createSinkRecord("testTopic", "testKey", "lBin", Arrays.asList("aString", "anotherString"));
 
-	@Test
-	public void testConvertMapBin() {
-		Map<String, String> config = Collections.emptyMap();
-		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
-		SinkRecord record = createSinkRecord("testTopic", "testKey", "mBin", Collections.singletonMap("aKey", "aValue"));
+        AerospikeRecord result = subject.convertRecord(record);
 
-		AerospikeRecord result = subject.convertRecord(record);
+        Bin bins[] = result.bins();
+        assertEquals(1, bins.length);
+        Bin bin = bins[0];
+        assertEquals("lBin", bin.name);
+        List<?> value = (List<?>) bin.value.getObject();
+        assertEquals("aString", value.get(0));
+        assertEquals("anotherString", value.get(1));
+    }
 
-		Bin bins[] = result.bins();
-		assertEquals(1, bins.length);
-		Bin bin = bins[0];
-		assertEquals("mBin", bin.name);
-		Map<?, ?> value = (Map<?, ?>)bin.value.getObject();
-		assertEquals("aValue", value.get("aKey"));
-	}
-	
-	@Test
-	public void testConvertSetName() {
-		Map<String, String> config = Collections.singletonMap(ConverterConfig.SET_FIELD_CONFIG, "bin1");
-		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
-		SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345);
+    @Test
+    public void testConvertMapBin() {
+        Map<String, String> config = Collections.emptyMap();
+        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
+        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        SinkRecord record = createSinkRecord("testTopic", "testKey", "mBin",
+                Collections.singletonMap("aKey", "aValue"));
 
-		AerospikeRecord result = subject.convertRecord(record);
+        AerospikeRecord result = subject.convertRecord(record);
 
-		Key askey = result.key();
-		assertEquals("topicNamespace", askey.namespace);
-		assertEquals("aString", askey.setName);
-		assertEquals("testKey", askey.userKey.toString());
-	}
-	
-	@Test
-	public void testConvertStringKey() {
-		Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin1");
-		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
-		SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345);
+        Bin bins[] = result.bins();
+        assertEquals(1, bins.length);
+        Bin bin = bins[0];
+        assertEquals("mBin", bin.name);
+        Map<?, ?> value = (Map<?, ?>) bin.value.getObject();
+        assertEquals("aValue", value.get("aKey"));
+    }
 
-		AerospikeRecord result = subject.convertRecord(record);
+    @Test
+    public void testConvertSetName() {
+        Map<String, String> config = Collections.singletonMap(ConverterConfig.SET_FIELD_CONFIG, "bin1");
+        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
+        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345);
 
-		Key askey = result.key();
-		assertEquals("topicNamespace", askey.namespace);
-		assertEquals("topicSet", askey.setName);
-		assertEquals("aString", askey.userKey.toString());
-	}
+        AerospikeRecord result = subject.convertRecord(record);
 
-	@Test
-	public void testConvertIntegerKey() {
-		Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin2");
-		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
-		SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345);
+        Key askey = result.key();
+        assertEquals("topicNamespace", askey.namespace);
+        assertEquals("aString", askey.setName);
+        assertEquals("testKey", askey.userKey.toString());
+    }
 
-		AerospikeRecord result = subject.convertRecord(record);
+    @Test
+    public void testConvertStringKey() {
+        Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin1");
+        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
+        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345);
 
-		Key askey = result.key();
-		assertEquals("topicNamespace", askey.namespace);
-		assertEquals("topicSet", askey.setName);
-		assertEquals(12345, askey.userKey.toInteger());
-	}
+        AerospikeRecord result = subject.convertRecord(record);
 
-	@Test
-	public void testConvertLongKey() {
-		Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin2");
-		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
-		SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345678l);
+        Key askey = result.key();
+        assertEquals("topicNamespace", askey.namespace);
+        assertEquals("topicSet", askey.setName);
+        assertEquals("aString", askey.userKey.toString());
+    }
 
-		AerospikeRecord result = subject.convertRecord(record);
+    @Test
+    public void testConvertIntegerKey() {
+        Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin2");
+        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
+        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345);
 
-		Key askey = result.key();
-		assertEquals("topicNamespace", askey.namespace);
-		assertEquals("topicSet", askey.setName);
-		assertEquals(12345678l, askey.userKey.toLong());
-	}
+        AerospikeRecord result = subject.convertRecord(record);
 
-	@Test
-	public void testConvertBytesKey() {
-		Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin2");
-		Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-		RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
-		SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", new byte[] {0x01, 0x02, 0x03, 0x04});
+        Key askey = result.key();
+        assertEquals("topicNamespace", askey.namespace);
+        assertEquals("topicSet", askey.setName);
+        assertEquals(12345, askey.userKey.toInteger());
+    }
 
-		AerospikeRecord result = subject.convertRecord(record);
+    @Test
+    public void testConvertLongKey() {
+        Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin2");
+        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
+        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345678l);
 
-		Key askey = result.key();
-		assertEquals("topicNamespace", askey.namespace);
-		assertEquals("topicSet", askey.setName);
-		assertArrayEquals(new byte[] {0x01, 0x02, 0x03, 0x04}, (byte[])askey.userKey.getObject());
-	}
+        AerospikeRecord result = subject.convertRecord(record);
 
-	private Map<String, TopicConfig> createTopicConfigs(String topic, String namespace, String set) {
-		Map<String, Object> config = new HashMap<>();
-		config.put("namespace", namespace);
-		config.put("set", set);
-		return Collections.singletonMap(topic, new TopicConfig(config));
-	}
+        Key askey = result.key();
+        assertEquals("topicNamespace", askey.namespace);
+        assertEquals("topicSet", askey.setName);
+        assertEquals(12345678l, askey.userKey.toLong());
+    }
+
+    @Test
+    public void testConvertBytesKey() {
+        Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin2");
+        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
+        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2",
+                new byte[] { 0x01, 0x02, 0x03, 0x04 });
+
+        AerospikeRecord result = subject.convertRecord(record);
+
+        Key askey = result.key();
+        assertEquals("topicNamespace", askey.namespace);
+        assertEquals("topicSet", askey.setName);
+        assertArrayEquals(new byte[] { 0x01, 0x02, 0x03, 0x04 }, (byte[]) askey.userKey.getObject());
+    }
+
+    private Map<String, TopicConfig> createTopicConfigs(String topic, String namespace, String set) {
+        Map<String, Object> config = new HashMap<>();
+        config.put("namespace", namespace);
+        config.put("set", set);
+        return Collections.singletonMap(topic, new TopicConfig(config));
+    }
 
 }

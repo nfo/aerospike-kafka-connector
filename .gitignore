@@ -3,5 +3,6 @@
 .classpath
 .settings
 .project
+.checkstyle
 *.jpage
 confluent-*

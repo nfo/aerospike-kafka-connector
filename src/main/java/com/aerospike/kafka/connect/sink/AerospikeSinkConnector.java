@@ -33,50 +33,51 @@ import com.aerospike.kafka.connect.Version;
 
 public class AerospikeSinkConnector extends SinkConnector {
 
-	private static final Logger log = LoggerFactory.getLogger(AerospikeSinkConnector.class);
+    private static final Logger log = LoggerFactory.getLogger(AerospikeSinkConnector.class);
 
-	private Map<String, String> configProperties;
+    private Map<String, String> configProperties;
 
-	@Override
-	public ConfigDef config() {
-		return ConnectorConfig.config;
-	}
+    @Override
+    public ConfigDef config() {
+        return ConnectorConfig.config;
+    }
 
-	@Override
-	public void start(Map<String, String> props) {
-		log.info("Starting {} connector", this.getClass().getName());
-		try {
-			configProperties = props;
-			new ConnectorConfig(props);
-		} catch (ConfigException e) {
-			throw new ConnectException("Could not start AerospikeSinkConnector due to configuration error", e);
-		}
-	}
+    @Override
+    public void start(Map<String, String> props) {
+        log.info("Starting {} connector", this.getClass().getName());
+        try {
+            configProperties = props;
+            new ConnectorConfig(props);
+        } catch (ConfigException e) {
+            throw new ConnectException("Could not start AerospikeSinkConnector due to configuration error", e);
+        }
+    }
 
-	@Override
-	public void stop() {
-		// Nothing to do since AerospikeSinkConnector has no background monitoring
-		log.info("Stopping {} connector", this.getClass().getName());
-	}
+    @Override
+    public void stop() {
+        // Nothing to do since AerospikeSinkConnector has no background
+        // monitoring
+        log.info("Stopping {} connector", this.getClass().getName());
+    }
 
-	@Override
-	public Class<? extends Task> taskClass() {
-		return AerospikeSinkTask.class;
-	}
+    @Override
+    public Class<? extends Task> taskClass() {
+        return AerospikeSinkTask.class;
+    }
 
-	@Override
-	public List<Map<String, String>> taskConfigs(int maxTasks) {
-		List<Map<String, String>> taskConfigs = new ArrayList<>();
-		Map<String, String> taskProps = new HashMap<>();
-		taskProps.putAll(configProperties);
-		for (int i = 0; i < maxTasks; i++) {
-			taskConfigs.add(taskProps);
-		}
-		return taskConfigs;
-	}
+    @Override
+    public List<Map<String, String>> taskConfigs(int maxTasks) {
+        List<Map<String, String>> taskConfigs = new ArrayList<>();
+        Map<String, String> taskProps = new HashMap<>();
+        taskProps.putAll(configProperties);
+        for (int i = 0; i < maxTasks; i++) {
+            taskConfigs.add(taskProps);
+        }
+        return taskConfigs;
+    }
 
-	@Override
-	public String version() {
-		return Version.getVersion();
-	}
+    @Override
+    public String version() {
+        return Version.getVersion();
+    }
 }

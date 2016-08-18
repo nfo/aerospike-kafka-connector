@@ -24,23 +24,23 @@ import com.aerospike.kafka.connect.sink.TopicConfig;
 
 public abstract class RecordConverter {
 
-	private ConverterConfig config;
-	private Map<String, TopicConfig> topicConfigs;
-	
-	protected RecordConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
-		this.config = config;
-		this.topicConfigs = topicConfigs;
-	}
+    private ConverterConfig config;
+    private Map<String, TopicConfig> topicConfigs;
 
-	public abstract AerospikeRecord convertRecord(SinkRecord record);
+    protected RecordConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
+        this.config = config;
+        this.topicConfigs = topicConfigs;
+    }
 
-	public ConverterConfig getConfig() {
-		return config;
-	}
+    public abstract AerospikeRecord convertRecord(SinkRecord record);
 
-	public TopicConfig getTopicConfig(SinkRecord record) {
-		String topic = record.topic();
-		return topicConfigs.get(topic);
-	}
+    public ConverterConfig getConfig() {
+        return config;
+    }
+
+    public TopicConfig getTopicConfig(SinkRecord record) {
+        String topic = record.topic();
+        return topicConfigs.get(topic);
+    }
 
 }

@@ -38,13 +38,13 @@ import com.aerospike.kafka.connect.data.AerospikeRecord;
  * async client. The flush method waits until all in-flight request have been
  * completed.
  */
-public class AsyncWriter implements WriteListener {
+public class AsyncWriter {
 
     private static final Logger log = LoggerFactory.getLogger(AsyncWriter.class);
 
     private final AsyncClient client;
     private final WritePolicy writePolicy;
-    private final AtomicCounter inFlight;
+    private final InFlightCounter inFlight;
 
     public AsyncWriter(ConnectorConfig config) {
         try {
@@ -52,7 +52,7 @@ public class AsyncWriter implements WriteListener {
             int port = config.getPort();
             AsyncClientPolicy policy = createClientPolicy(config);
             client = new AsyncClient(policy, hostname, port);
-            inFlight = new AtomicCounter();
+            inFlight = new InFlightCounter();
         } catch (AerospikeException e) {
             throw new ConnectException("Error connecting to Aerospike cluster", e);
         }
@@ -62,24 +62,12 @@ public class AsyncWriter implements WriteListener {
     public void write(AerospikeRecord record) {
         Key key = record.key();
         Bin[] bins = record.bins();
-        inFlight.incr();
-        client.put(writePolicy, this, key, bins);
+        inFlight.increment();
+        client.put(writePolicy, inFlight, key, bins);
     }
 
     public void flush() {
         inFlight.waitUntilZero();
-    }
-
-    @Override
-    public void onFailure(AerospikeException e) {
-        log.error("Error writing record", e);
-        inFlight.decr();
-    }
-
-    @Override
-    public void onSuccess(Key key) {
-        log.trace("Successfully put key {}", key);
-        inFlight.decr();
     }
     
     private AsyncClientPolicy createClientPolicy(ConnectorConfig config) {
@@ -98,27 +86,25 @@ public class AsyncWriter implements WriteListener {
         log.trace("Write Policy: recordExistsAction={}", policy.recordExistsAction);
         return policy;
     }
+    
+    class InFlightCounter implements WriteListener {
 
-    class AtomicCounter {
         private static final long DEFAULT_SLEEP_INTERVAL_MS = 1;
-        private final long sleepMs;
-        private AtomicInteger counter;
 
-        public AtomicCounter() {
+        private AtomicInteger counter;
+        private final long sleepMs;
+
+        public InFlightCounter() {
             this(DEFAULT_SLEEP_INTERVAL_MS);
         }
 
-        public AtomicCounter(long sleepMs) {
+        public InFlightCounter(long sleepMs) {
             this.sleepMs = sleepMs;
             counter = new AtomicInteger(0);
         }
-
-        public void incr() {
+        
+        public void increment() {
             counter.incrementAndGet();
-        }
-
-        public void decr() {
-            counter.decrementAndGet();
         }
 
         public void waitUntilZero() {
@@ -129,8 +115,20 @@ public class AsyncWriter implements WriteListener {
                     Thread.sleep(sleepMs);
                 }
             } catch (InterruptedException e) {
-                throw new ConnectException(e);
+                throw new ConnectException("Interrupted while waiting to complete in-flight requests", e);
             }
+        }
+
+        @Override
+        public void onFailure(AerospikeException e) {
+            log.error("Error writing record", e);
+            counter.decrementAndGet();
+        }
+
+        @Override
+        public void onSuccess(Key key) {
+            log.trace("Successfully put key {}", key);
+            counter.decrementAndGet();
         }
     }
 }

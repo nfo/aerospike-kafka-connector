@@ -23,12 +23,12 @@ import java.util.Map;
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
-import org.apache.kafka.common.config.ConfigDef.Range;
 import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.config.ConfigDef.ValidString;
 import org.apache.kafka.common.config.ConfigDef.Validator;
 import org.apache.kafka.common.config.ConfigException;
 
+import com.aerospike.client.Host;
 import com.aerospike.client.async.MaxCommandAction;
 import com.aerospike.client.policy.RecordExistsAction;
 
@@ -39,13 +39,11 @@ public class ConnectorConfig extends AbstractConfig {
     public static final String TOPICS_CONFIG = AerospikeSinkConnector.TOPICS_CONFIG;
     private static final String TOPICS_DOC = "List of Kafka topics";
 
-    public static final String HOSTNAME_CONFIG = "hostname";
-    private static final String HOSTNAME_DOC = "Aerospike Hostname";
-
-    public static final String PORT_CONFIG = "port";
-    private static final String PORT_DOC = "Aerospike Port";
-    private static final int PORT_DEFAULT = 3000;
-    private static final Validator PORT_VALIDATOR = Range.between(1, 65535);
+    public static final String HOSTS_CONFIG = "cluster.hosts";
+    private static final String HOSTS_DOC = "Comma separated list of one or more Aerospike cluster hosts;"
+            + "each host can be specified as a valid IP address or hostname followed by an optional port number (default is 3000)";
+    private static final String HOSTS_DEFAULT = "127.0.0.1";
+    private static final Validator HOSTS_VALIDATOR = new HostsValidator();
 
     public static final String POLICY_RECORD_EXISTS_ACTION_CONFIG = "policy.record_exists_action";
     private static final String POLICY_RECORD_EXISTS_ACTION_DOC = "Write Policy: How to handle writes when the record already exists";
@@ -63,14 +61,14 @@ public class ConnectorConfig extends AbstractConfig {
     private static final Validator MAX_COMMAND_ACTION_VALIDATOR = ValidString.in("accept", "block", "reject");
 
     public static ConfigDef baseConfigDef() {
-        return new ConfigDef()
-                .define(TOPICS_CONFIG, Type.LIST, Importance.HIGH, TOPICS_DOC)
-                .define(HOSTNAME_CONFIG, Type.STRING, Importance.HIGH, HOSTNAME_DOC)
-                .define(PORT_CONFIG, Type.INT, PORT_DEFAULT, PORT_VALIDATOR, Importance.LOW, PORT_DOC)
+        return new ConfigDef().define(TOPICS_CONFIG, Type.LIST, Importance.HIGH, TOPICS_DOC)
+                .define(HOSTS_CONFIG, Type.STRING, HOSTS_DEFAULT, HOSTS_VALIDATOR, Importance.HIGH, HOSTS_DOC)
                 .define(POLICY_RECORD_EXISTS_ACTION_CONFIG, Type.STRING, POLICY_RECORD_EXISTS_ACTION_DEFAULT,
                         POLICY_RECORD_EXISTS_ACTION_VALIDATOR, Importance.LOW, POLICY_RECORD_EXISTS_ACTION_DOC)
-                .define(MAX_ASYNC_COMMANDS_CONFIG, Type.INT, MAX_ASYNC_COMMANDS_DEFAULT, Importance.LOW, MAX_ASYNC_COMMANDS_DOC)
-                .define(MAX_COMMAND_ACTION_CONFIG, Type.STRING, MAX_COMMAND_ACTION_DEFAULT, MAX_COMMAND_ACTION_VALIDATOR, Importance.LOW, MAX_COMMAND_ACTION_DOC);
+                .define(MAX_ASYNC_COMMANDS_CONFIG, Type.INT, MAX_ASYNC_COMMANDS_DEFAULT, Importance.LOW,
+                        MAX_ASYNC_COMMANDS_DOC)
+                .define(MAX_COMMAND_ACTION_CONFIG, Type.STRING, MAX_COMMAND_ACTION_DEFAULT,
+                        MAX_COMMAND_ACTION_VALIDATOR, Importance.LOW, MAX_COMMAND_ACTION_DOC);
     }
 
     static ConfigDef config = baseConfigDef();
@@ -79,12 +77,9 @@ public class ConnectorConfig extends AbstractConfig {
         super(config, props);
     }
 
-    public String getHostname() {
-        return getString(HOSTNAME_CONFIG);
-    }
-
-    public int getPort() {
-        return getInt(PORT_CONFIG);
+    public Host[] getHosts() {
+        String hostsString = getString(HOSTS_CONFIG);
+        return HostsParser.parseHostsString(hostsString);
     }
 
     public RecordExistsAction getPolicyRecordExistsAction() {
@@ -105,11 +100,11 @@ public class ConnectorConfig extends AbstractConfig {
             throw new ConfigException(POLICY_RECORD_EXISTS_ACTION_CONFIG, action, "Unsupported policy value.");
         }
     }
-    
+
     public int getMaxAsyncCommands() {
         return getInt(MAX_ASYNC_COMMANDS_CONFIG);
     }
-    
+
     public MaxCommandAction getMaxCommandAction() {
         String action = getString(MAX_COMMAND_ACTION_CONFIG);
         switch (action) {
@@ -137,9 +132,24 @@ public class ConnectorConfig extends AbstractConfig {
         }
         return topicConfigs;
     }
-    
+
     public static void main(String[] args) {
         System.out.println(config.toRst());
     }
 
+}
+
+class HostsValidator implements Validator {
+    public HostsValidator() {
+    };
+
+    @Override
+    public void ensureValid(String name, Object value) {
+        try {
+            String hosts = (String) value;
+            HostsParser.parseHostsString(hosts);
+        } catch (Exception e) {
+            throw new ConfigException(name, value, "Invalid hosts string: " + e.getMessage());
+        }
+    }
 }

@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import com.aerospike.client.AerospikeException;
 import com.aerospike.client.Bin;
+import com.aerospike.client.Host;
 import com.aerospike.client.Key;
 import com.aerospike.client.async.AsyncClient;
 import com.aerospike.client.async.AsyncClientPolicy;
@@ -48,10 +49,9 @@ public class AsyncWriter {
 
     public AsyncWriter(ConnectorConfig config) {
         try {
-            String hostname = config.getHostname();
-            int port = config.getPort();
+            Host[] hosts = config.getHosts();
             AsyncClientPolicy policy = createClientPolicy(config);
-            client = new AsyncClient(policy, hostname, port);
+            client = new AsyncClient(policy, hosts);
             inFlight = new InFlightCounter();
         } catch (AerospikeException e) {
             throw new ConnectException("Error connecting to Aerospike cluster", e);

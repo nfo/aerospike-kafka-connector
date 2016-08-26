@@ -16,8 +16,6 @@
  */
 package com.aerospike.kafka.connect.data;
 
-import java.util.List;
-
 import com.aerospike.client.Bin;
 import com.aerospike.client.Key;
 
@@ -29,11 +27,6 @@ public class AerospikeRecord {
     public AerospikeRecord(Key key, Bin[] bins) {
         this.key = key;
         this.bins = bins;
-    }
-
-    public AerospikeRecord(Key key, List<Bin> bins) {
-        this.key = key;
-        this.bins = bins.toArray(new Bin[0]);
     }
 
     public Key key() {

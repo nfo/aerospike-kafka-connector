@@ -72,7 +72,7 @@ public class AerospikeSinkTask extends SinkTask {
     public void start(Map<String, String> props) {
         log.trace("Starting {} task with config: {}", this.getClass().getName(), props);
         ConnectorConfig config = new ConnectorConfig(props);
-        mappers = new RecordMapperFactory(config.getMappingConfig(), config.getTopicConfigs());
+        mappers = new RecordMapperFactory(config.getTopicConfigs());
         writer = new AsyncWriter(config);
     }
 

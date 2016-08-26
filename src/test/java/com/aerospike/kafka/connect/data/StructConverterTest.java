@@ -18,7 +18,6 @@ package com.aerospike.kafka.connect.data;
 
 import static org.junit.Assert.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -38,9 +37,11 @@ public class StructConverterTest extends AbstractConverterTest {
 
     @Test
     public void testConvertStructBin() {
-        Map<String, String> config = Collections.emptyMap();
-        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        Map<String, TopicConfig> config = configFor("testTopic", 
+                "namespace", "topicNamespace", 
+                "set", "topicSet"
+                );
+        RecordConverter subject = getConverter(config);
         SinkRecord record = createSinkRecord("testTopic", "testKey", "structBin", buildStruct("aKey", "aValue", "intKey", 42));
 
         AerospikeRecord result = subject.convertRecord(record);
@@ -55,8 +56,8 @@ public class StructConverterTest extends AbstractConverterTest {
     }
 
     @Override
-    public RecordConverter getConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
-        return new StructConverter(config, topicConfigs);
+    public RecordConverter getConverter(Map<String, TopicConfig> config) {
+        return new StructConverter(config);
     }
 
     public SinkRecord createSinkRecord(String topic, Object key, Object... keysAndValues) {

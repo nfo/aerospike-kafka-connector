@@ -31,12 +31,10 @@ import org.apache.kafka.common.config.ConfigException;
 
 import com.aerospike.client.async.MaxCommandAction;
 import com.aerospike.client.policy.RecordExistsAction;
-import com.aerospike.kafka.connect.data.ConverterConfig;
 
 public class ConnectorConfig extends AbstractConfig {
 
     private static final String TOPIC_CONFIG_PREFIX = "topic.";
-    private static final String CONVERTER_CONFIG_PREFIX = "mapping.";
 
     public static final String TOPICS_CONFIG = AerospikeSinkConnector.TOPICS_CONFIG;
     private static final String TOPICS_DOC = "List of Kafka topics";
@@ -138,10 +136,6 @@ public class ConnectorConfig extends AbstractConfig {
             topicConfigs.put(topic, new TopicConfig(config));
         }
         return topicConfigs;
-    }
-
-    public ConverterConfig getMappingConfig() {
-        return new ConverterConfig(originalsWithPrefix(CONVERTER_CONFIG_PREFIX));
     }
     
     public static void main(String[] args) {

@@ -24,19 +24,13 @@ import com.aerospike.kafka.connect.sink.TopicConfig;
 
 public abstract class RecordConverter {
 
-    private ConverterConfig config;
     private Map<String, TopicConfig> topicConfigs;
 
-    protected RecordConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
-        this.config = config;
+    protected RecordConverter(Map<String, TopicConfig> topicConfigs) {
         this.topicConfigs = topicConfigs;
     }
 
     public abstract AerospikeRecord convertRecord(SinkRecord record);
-
-    public ConverterConfig getConfig() {
-        return config;
-    }
 
     public TopicConfig getTopicConfig(SinkRecord record) {
         String topic = record.topic();

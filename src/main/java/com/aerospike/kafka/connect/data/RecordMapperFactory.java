@@ -29,12 +29,10 @@ import com.aerospike.kafka.connect.sink.TopicConfig;
 
 public class RecordMapperFactory {
 
-    private final ConverterConfig config;
     private final Map<String, TopicConfig> topicConfigs;
     private final Map<Type, RecordConverter> instances;
 
-    public RecordMapperFactory(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
-        this.config = config;
+    public RecordMapperFactory(Map<String, TopicConfig> topicConfigs) {
         this.topicConfigs = topicConfigs;
         instances = new HashMap<>();
     }
@@ -61,9 +59,9 @@ public class RecordMapperFactory {
     private RecordConverter createMapper(Type recordType) {
         switch (recordType) {
         case STRUCT:
-            return new StructConverter(config, topicConfigs);
+            return new StructConverter(topicConfigs);
         case MAP:
-            return new MapConverter(config, topicConfigs);
+            return new MapConverter(topicConfigs);
         default:
             throw new DataException("No mapper for records of type " + recordType);
         }

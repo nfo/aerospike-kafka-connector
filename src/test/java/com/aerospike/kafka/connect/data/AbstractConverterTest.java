@@ -35,15 +35,17 @@ import com.aerospike.kafka.connect.sink.TopicConfig;
 
 public abstract class AbstractConverterTest {
 
-    public abstract RecordConverter getConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs);
+    public abstract RecordConverter getConverter(Map<String, TopicConfig> topicConfigs);
 
     public abstract SinkRecord createSinkRecord(String topic, Object key, Object... keysAndValues);
 
     @Test
     public void testConvertStringBin() {
-        Map<String, String> config = Collections.emptyMap();
-        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        Map<String, TopicConfig> config = configFor("testTopic", 
+                "namespace", "topicNamespace", 
+                "set", "topicSet"
+                );
+        RecordConverter subject = getConverter(config);
         SinkRecord record = createSinkRecord("testTopic", "testKey", "sBin", "aString");
 
         AerospikeRecord result = subject.convertRecord(record);
@@ -57,9 +59,11 @@ public abstract class AbstractConverterTest {
 
     @Test
     public void testConvertIntegerBin() {
-        Map<String, String> config = Collections.emptyMap();
-        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        Map<String, TopicConfig> config = configFor("testTopic", 
+                "namespace", "topicNamespace", 
+                "set", "topicSet"
+                );
+        RecordConverter subject = getConverter(config);
         SinkRecord record = createSinkRecord("testTopic", "testKey", "iBin", 12345);
 
         AerospikeRecord result = subject.convertRecord(record);
@@ -73,9 +77,11 @@ public abstract class AbstractConverterTest {
 
     @Test
     public void testConvertDoubleBin() {
-        Map<String, String> config = Collections.emptyMap();
-        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        Map<String, TopicConfig> config = configFor("testTopic", 
+                "namespace", "topicNamespace", 
+                "set", "topicSet"
+                );
+        RecordConverter subject = getConverter(config);
         SinkRecord record = createSinkRecord("testTopic", "testKey", "dBin", 12.345);
 
         AerospikeRecord result = subject.convertRecord(record);
@@ -89,9 +95,11 @@ public abstract class AbstractConverterTest {
 
     @Test
     public void testConvertListBin() {
-        Map<String, String> config = Collections.emptyMap();
-        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        Map<String, TopicConfig> config = configFor("testTopic", 
+                "namespace", "topicNamespace", 
+                "set", "topicSet"
+                );
+        RecordConverter subject = getConverter(config);
         SinkRecord record = createSinkRecord("testTopic", "testKey", "lBin", Arrays.asList("aString", "anotherString"));
 
         AerospikeRecord result = subject.convertRecord(record);
@@ -107,9 +115,11 @@ public abstract class AbstractConverterTest {
 
     @Test
     public void testConvertMapBin() {
-        Map<String, String> config = Collections.emptyMap();
-        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        Map<String, TopicConfig> config = configFor("testTopic", 
+                "namespace", "topicNamespace", 
+                "set", "topicSet"
+                );
+        RecordConverter subject = getConverter(config);
         SinkRecord record = createSinkRecord("testTopic", "testKey", "mBin",
                 Collections.singletonMap("aKey", "aValue"));
 
@@ -125,9 +135,11 @@ public abstract class AbstractConverterTest {
 
     @Test
     public void testConvertSetName() {
-        Map<String, String> config = Collections.singletonMap(ConverterConfig.SET_FIELD_CONFIG, "bin1");
-        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        Map<String, TopicConfig> config = configFor("testTopic", 
+                "namespace", "topicNamespace", 
+                "set_field", "bin1"
+                );
+        RecordConverter subject = getConverter(config);
         SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345);
 
         AerospikeRecord result = subject.convertRecord(record);
@@ -140,9 +152,12 @@ public abstract class AbstractConverterTest {
 
     @Test
     public void testConvertStringKey() {
-        Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin1");
-        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        Map<String, TopicConfig> config = configFor("testTopic", 
+                "namespace", "topicNamespace", 
+                "set", "topicSet",
+                "key_field", "bin1"
+                );
+        RecordConverter subject = getConverter(config);
         SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345);
 
         AerospikeRecord result = subject.convertRecord(record);
@@ -155,9 +170,12 @@ public abstract class AbstractConverterTest {
 
     @Test
     public void testConvertIntegerKey() {
-        Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin2");
-        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        Map<String, TopicConfig> config = configFor("testTopic", 
+                "namespace", "topicNamespace", 
+                "set", "topicSet",
+                "key_field", "bin2"
+                );
+        RecordConverter subject = getConverter(config);
         SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345);
 
         AerospikeRecord result = subject.convertRecord(record);
@@ -170,9 +188,12 @@ public abstract class AbstractConverterTest {
 
     @Test
     public void testConvertLongKey() {
-        Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin2");
-        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        Map<String, TopicConfig> config = configFor("testTopic", 
+                "namespace", "topicNamespace", 
+                "set", "topicSet",
+                "key_field", "bin2"
+                );
+        RecordConverter subject = getConverter(config);
         SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", 12345678l);
 
         AerospikeRecord result = subject.convertRecord(record);
@@ -185,9 +206,12 @@ public abstract class AbstractConverterTest {
 
     @Test
     public void testConvertBytesKey() {
-        Map<String, String> config = Collections.singletonMap(ConverterConfig.KEY_FIELD_CONFIG, "bin2");
-        Map<String, TopicConfig> topicConfigs = createTopicConfigs("testTopic", "topicNamespace", "topicSet");
-        RecordConverter subject = getConverter(new ConverterConfig(config), topicConfigs);
+        Map<String, TopicConfig> config = configFor("testTopic", 
+                "namespace", "topicNamespace", 
+                "set", "topicSet",
+                "key_field", "bin2"
+                );
+        RecordConverter subject = getConverter(config);
         SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2",
                 new byte[] { 0x01, 0x02, 0x03, 0x04 });
 
@@ -199,10 +223,11 @@ public abstract class AbstractConverterTest {
         assertArrayEquals(new byte[] { 0x01, 0x02, 0x03, 0x04 }, (byte[]) askey.userKey.getObject());
     }
 
-    protected Map<String, TopicConfig> createTopicConfigs(String topic, String namespace, String set) {
+    protected Map<String, TopicConfig> configFor(String topic, String... keysAndValues) {
         Map<String, Object> config = new HashMap<>();
-        config.put("namespace", namespace);
-        config.put("set", set);
+        for (int i = 0; i < keysAndValues.length; i = i + 2) {
+            config.put(keysAndValues[i], keysAndValues[i + 1]);
+        }
         return Collections.singletonMap(topic, new TopicConfig(config));
     }
 

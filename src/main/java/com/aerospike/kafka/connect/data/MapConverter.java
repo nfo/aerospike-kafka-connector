@@ -30,8 +30,8 @@ import com.aerospike.kafka.connect.sink.TopicConfig;
 
 public class MapConverter extends RecordConverter {
 
-    public MapConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
-        super(config, topicConfigs);
+    public MapConverter(Map<String, TopicConfig> topicConfigs) {
+        super(topicConfigs);
     }
 
     public AerospikeRecord convertRecord(SinkRecord record) {
@@ -49,11 +49,10 @@ public class MapConverter extends RecordConverter {
         throw new DataException("Unsupported record type - expected to get map instance");
     }
 
-    private Key keyFromRecord(Map<?, ?> recordMap, Object recordKey, TopicConfig topicConfig) {
-        String namespace = topicConfig.getNamespace();
-        String set = topicConfig.getSet();
+    private Key keyFromRecord(Map<?, ?> recordMap, Object recordKey, TopicConfig config) {
+        String namespace = config.getNamespace();
+        String set = config.getSet();
         Object userKey = recordKey;
-        ConverterConfig config = getConfig();
         String setField = config.getSetField();
         if (setField != null) {
             if (!recordMap.containsKey(setField)) {

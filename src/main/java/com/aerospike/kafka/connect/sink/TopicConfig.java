@@ -30,11 +30,20 @@ public class TopicConfig extends AbstractConfig {
 
     public static final String SET_CONFIG = "set";
     private static final String SET_DOC = "Set to use for the topic";
+    
+    public static final String KEY_FIELD_CONFIG = "key_field";
+    private static final String KEY_FIELD_DOC = "Name of the Kafka record field that contains the Aerospike user key";
+
+    public static final String SET_FIELD_CONFIG = "set_field";
+    private static final String SET_FIELD_DOC = "Name of the Kafka record field that contains the Aerospike set name";
+
 
     public static ConfigDef baseConfigDef() {
         return new ConfigDef()
                 .define(NAMESPACE_CONFIG, Type.STRING, Importance.LOW, NAMESPACE_DOC)
-                .define(SET_CONFIG, Type.STRING, Importance.LOW, SET_DOC);
+                .define(SET_CONFIG, Type.STRING, null, Importance.LOW, SET_DOC)
+                .define(KEY_FIELD_CONFIG, Type.STRING, null, Importance.MEDIUM, KEY_FIELD_DOC)
+                .define(SET_FIELD_CONFIG, Type.STRING, null, Importance.MEDIUM, SET_FIELD_DOC);
     }
 
     public static ConfigDef config = baseConfigDef();
@@ -49,5 +58,13 @@ public class TopicConfig extends AbstractConfig {
 
     public String getSet() {
         return getString(SET_CONFIG);
+    }
+    
+    public String getKeyField() {
+        return getString(KEY_FIELD_CONFIG);
+    }
+
+    public String getSetField() {
+        return getString(SET_FIELD_CONFIG);
     }
 }

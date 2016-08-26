@@ -27,8 +27,8 @@ import com.aerospike.kafka.connect.sink.TopicConfig;
 public class MapConverterTest extends AbstractConverterTest {
 
     @Override
-    public RecordConverter getConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
-        return new MapConverter(config, topicConfigs);
+    public RecordConverter getConverter(Map<String, TopicConfig> config) {
+        return new MapConverter(config);
     }
 
     public SinkRecord createSinkRecord(String topic, Object key, Object... keysAndValues) {

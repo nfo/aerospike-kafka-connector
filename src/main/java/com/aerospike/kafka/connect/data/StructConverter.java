@@ -39,8 +39,8 @@ public class StructConverter extends RecordConverter {
 
     private static final Logger log = LoggerFactory.getLogger(StructConverter.class);
 
-    public StructConverter(ConverterConfig config, Map<String, TopicConfig> topicConfigs) {
-        super(config, topicConfigs);
+    public StructConverter(Map<String, TopicConfig> topicConfigs) {
+        super(topicConfigs);
     }
 
     public AerospikeRecord convertRecord(SinkRecord record) {
@@ -61,11 +61,10 @@ public class StructConverter extends RecordConverter {
         return (Struct) value;
     }
 
-    private Key keyFromRecord(Struct struct, Object recordKey, TopicConfig topicConfig) {
-        String namespace = topicConfig.getNamespace();
-        String set = topicConfig.getSet();
+    private Key keyFromRecord(Struct struct, Object recordKey, TopicConfig config) {
+        String namespace = config.getNamespace();
+        String set = config.getSet();
         Object userKey = recordKey;
-        ConverterConfig config = getConfig();
         if (config.getSetField() != null) {
             set = struct.getString(config.getSetField());
         }
@@ -125,7 +124,7 @@ public class StructConverter extends RecordConverter {
                 Struct nestedStruct = struct.getStruct(name);
                 bins.add(new Bin(name, mapFromStruct(nestedStruct)));
             default:
-                log.debug("Ignoring struct field {} of unsupported type {}", name, type);
+                log.info("Ignoring struct field {} of unsupported type {}", name, type);
             }
         }
         return bins.toArray(new Bin[0]);

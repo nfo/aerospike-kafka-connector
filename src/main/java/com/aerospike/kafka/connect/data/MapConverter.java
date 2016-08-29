@@ -38,7 +38,7 @@ public class MapConverter extends RecordConverter {
         Map<?, ?> value = asMap(record.value());
         TopicConfig topicConfig = getTopicConfig(record);
         Key key = keyFromRecord(value, record.key(), topicConfig);
-        Bin[] bins = binsFromMap(value);
+        Bin[] bins = binsFromMap(value, topicConfig);
         return new AerospikeRecord(key, bins);
     }
 
@@ -76,10 +76,18 @@ public class MapConverter extends RecordConverter {
         return new Key(namespace, set, userKeyValue);
     }
 
-    private Bin[] binsFromMap(Map<?, ?> map) {
+    private Bin[] binsFromMap(Map<?, ?> map, TopicConfig config) {
+        Map<String, String> binMapping = config.getBinMapping();
         List<Bin> bins = new ArrayList<Bin>();
         for (Map.Entry<?, ?> entry : map.entrySet()) {
-            bins.add(new Bin(entry.getKey().toString(), entry.getValue()));
+            String name = entry.getKey().toString();
+            if (binMapping != null) {
+                name = binMapping.get(name);
+                if (name == null) {
+                    continue;
+                }
+            }
+            bins.add(new Bin(name, entry.getValue()));
         }
         return bins.toArray(new Bin[0]);
     }

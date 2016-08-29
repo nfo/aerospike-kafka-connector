@@ -16,6 +16,7 @@
  */
 package com.aerospike.kafka.connect.sink;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.kafka.common.config.AbstractConfig;
@@ -37,19 +38,26 @@ public class TopicConfig extends AbstractConfig {
     public static final String SET_FIELD_CONFIG = "set_field";
     private static final String SET_FIELD_DOC = "Name of the Kafka record field that contains the Aerospike set name";
 
+    public static final String BINS_CONFIG = "bins";
+    private static final String BINS_DOC = "Comma separated listed of bin names to include in the Aerospike record with " +
+            "optinal field name mappings in the Kafka record: \"<bin1>[:<field1>][,<bin2>[:<field2>]]+\"";
 
     public static ConfigDef baseConfigDef() {
         return new ConfigDef()
                 .define(NAMESPACE_CONFIG, Type.STRING, Importance.LOW, NAMESPACE_DOC)
                 .define(SET_CONFIG, Type.STRING, null, Importance.LOW, SET_DOC)
-                .define(KEY_FIELD_CONFIG, Type.STRING, null, Importance.MEDIUM, KEY_FIELD_DOC)
-                .define(SET_FIELD_CONFIG, Type.STRING, null, Importance.MEDIUM, SET_FIELD_DOC);
+                .define(KEY_FIELD_CONFIG, Type.STRING, null, Importance.LOW, KEY_FIELD_DOC)
+                .define(SET_FIELD_CONFIG, Type.STRING, null, Importance.LOW, SET_FIELD_DOC)
+                .define(BINS_CONFIG, Type.STRING, null, Importance.LOW, BINS_DOC);
     }
 
     public static ConfigDef config = baseConfigDef();
+    
+    private final Map<String, String> binMapping;
 
     public TopicConfig(Map<String, Object> props) {
         super(config, props);
+        binMapping = createBinMapping();
     }
 
     public String getNamespace() {
@@ -66,5 +74,27 @@ public class TopicConfig extends AbstractConfig {
 
     public String getSetField() {
         return getString(SET_FIELD_CONFIG);
+    }
+    
+    public Map<String, String> getBinMapping() {
+        return binMapping;
+    }
+    
+    private Map<String, String> createBinMapping() {
+        String binsStr = getString(BINS_CONFIG);
+        if (binsStr == null) {
+            return null;
+        }
+        Map<String, String> mapping = new HashMap<>();
+        String[] list = binsStr.split(",");
+        for (String entry : list) {
+            String[] bin = entry.split(":", 2);
+            if (bin.length == 1) {
+                mapping.put(bin[0], bin[0]);
+            } else {
+                mapping.put(bin[1], bin[0]);
+            }
+        }
+        return mapping;
     }
 }

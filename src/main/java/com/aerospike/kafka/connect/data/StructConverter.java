@@ -47,7 +47,7 @@ public class StructConverter extends RecordConverter {
         Struct value = asStruct(record.value(), record.valueSchema());
         TopicConfig topicConfig = getTopicConfig(record);
         Key key = keyFromRecord(value, record.key(), topicConfig);
-        Bin[] bins = binsFromStruct(value);
+        Bin[] bins = binsFromStruct(value, topicConfig);
         return new AerospikeRecord(key, bins);
     }
 
@@ -80,54 +80,72 @@ public class StructConverter extends RecordConverter {
         return new Key(namespace, set, userKeyValue);
     }
 
-    private Bin[] binsFromStruct(Struct struct) {
+    private Bin[] binsFromStruct(Struct struct, TopicConfig config) {
+        Map<String, String> binMapping = config.getBinMapping();
         List<Field> fields = struct.schema().fields();
         List<Bin> bins = new ArrayList<Bin>();
         for (Field field : fields) {
-            String name = field.name();
-            Type type = field.schema().type();
-            switch (type) {
-            case ARRAY:
-                bins.add(new Bin(name, struct.getArray(name)));
-                break;
-            case BOOLEAN:
-                bins.add(new Bin(name, struct.getBoolean(name)));
-                break;
-            case BYTES:
-                bins.add(new Bin(name, struct.getBytes(name)));
-                break;
-            case FLOAT32:
-                bins.add(new Bin(name, struct.getFloat32(name)));
-                break;
-            case FLOAT64:
-                bins.add(new Bin(name, struct.getFloat64(name)));
-                break;
-            case INT8:
-                bins.add(new Bin(name, struct.getInt8(name)));
-                break;
-            case INT16:
-                bins.add(new Bin(name, struct.getInt16(name)));
-                break;
-            case INT32:
-                bins.add(new Bin(name, struct.getInt32(name)));
-                break;
-            case INT64:
-                bins.add(new Bin(name, struct.getInt64(name)));
-                break;
-            case MAP:
-                bins.add(new Bin(name, struct.getMap(name)));
-                break;
-            case STRING:
-                bins.add(new Bin(name, struct.getString(name)));
-                break;
-            case STRUCT:
-                Struct nestedStruct = struct.getStruct(name);
-                bins.add(new Bin(name, mapFromStruct(nestedStruct)));
-            default:
-                log.info("Ignoring struct field {} of unsupported type {}", name, type);
+            Bin bin = binFromField(struct, field, binMapping);
+            if (bin != null) {
+                bins.add(bin);
             }
         }
         return bins.toArray(new Bin[0]);
+    }
+
+    private Bin binFromField(Struct struct, Field field, Map<String, String> binMapping) {
+        String fieldName = field.name();
+        String binName = fieldName;
+        if (binMapping != null) {
+            binName = binMapping.get(fieldName); 
+            if (binName == null) {
+                return null;
+            }
+        }
+
+        Bin bin = null;
+        Type type = field.schema().type();
+        switch (type) {
+        case ARRAY:
+            bin = new Bin(binName, struct.getArray(fieldName));
+            break;
+        case BOOLEAN:
+            bin = new Bin(binName, struct.getBoolean(fieldName));
+            break;
+        case BYTES:
+            bin = new Bin(binName, struct.getBytes(fieldName));
+            break;
+        case FLOAT32:
+            bin = new Bin(binName, struct.getFloat32(fieldName));
+            break;
+        case FLOAT64:
+            bin = new Bin(binName, struct.getFloat64(fieldName));
+            break;
+        case INT8:
+            bin = new Bin(binName, struct.getInt8(fieldName));
+            break;
+        case INT16:
+            bin = new Bin(binName, struct.getInt16(fieldName));
+            break;
+        case INT32:
+            bin = new Bin(binName, struct.getInt32(fieldName));
+            break;
+        case INT64:
+            bin = new Bin(binName, struct.getInt64(fieldName));
+            break;
+        case MAP:
+            bin = new Bin(binName, struct.getMap(fieldName));
+            break;
+        case STRING:
+            bin = new Bin(binName, struct.getString(fieldName));
+            break;
+        case STRUCT:
+            Struct nestedStruct = struct.getStruct(fieldName);
+            bin = new Bin(binName, mapFromStruct(nestedStruct));
+        default:
+            log.info("Ignoring struct field {} of unsupported type {}", fieldName, type);
+        }
+        return bin;
     }
     
     private Map<String, Object> mapFromStruct(Struct struct) {

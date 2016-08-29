@@ -223,6 +223,26 @@ public abstract class AbstractConverterTest {
         assertArrayEquals(new byte[] { 0x01, 0x02, 0x03, 0x04 }, (byte[]) askey.userKey.getObject());
     }
 
+    @Test
+    public void testBinMapping() {
+        Map<String, TopicConfig> config = configFor("testTopic", "namespace", "topicNamespace", "set", "topicSet",
+                "bins", "bin1,bin2X:bin2");
+        RecordConverter subject = getConverter(config);
+        SinkRecord record = createSinkRecord("testTopic", "testKey", "bin1", "aString", "bin2", "anotherString", "bin3",
+                "aThirdString");
+
+        AerospikeRecord result = subject.convertRecord(record);
+
+        Bin bins[] = result.bins();
+        assertEquals(2, bins.length);
+        Bin bin1 = bins[0];
+        assertEquals("bin1", bin1.name);
+        assertEquals("aString", bin1.value.toString());
+        Bin bin2 = bins[1];
+        assertEquals("bin2X", bin2.name);
+        assertEquals("anotherString", bin2.value.toString());
+    }
+
     protected Map<String, TopicConfig> configFor(String topic, String... keysAndValues) {
         Map<String, Object> config = new HashMap<>();
         for (int i = 0; i < keysAndValues.length; i = i + 2) {

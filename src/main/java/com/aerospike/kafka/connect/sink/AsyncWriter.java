@@ -16,13 +16,19 @@
  */
 package com.aerospike.kafka.connect.sink;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.kafka.connect.errors.ConnectException;
+import org.apache.kafka.connect.errors.RetriableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.aerospike.client.AerospikeException;
+import com.aerospike.client.AerospikeException.CommandRejected;
+import com.aerospike.client.AerospikeException.Connection;
+import com.aerospike.client.AerospikeException.Timeout;
 import com.aerospike.client.Bin;
 import com.aerospike.client.Host;
 import com.aerospike.client.Key;
@@ -45,14 +51,16 @@ public class AsyncWriter {
 
     private final AsyncClient client;
     private final WritePolicy writePolicy;
-    private final InFlightCounter inFlight;
+    private final Counter inFlight;
+    private final ResultListener listener;
 
     public AsyncWriter(ConnectorConfig config) {
         try {
             Host[] hosts = config.getHosts();
             AsyncClientPolicy policy = createClientPolicy(config);
             client = new AsyncClient(policy, hosts);
-            inFlight = new InFlightCounter();
+            inFlight = new Counter();
+            listener = new ResultListener(inFlight);
         } catch (AerospikeException e) {
             throw new ConnectException("Error connecting to Aerospike cluster", e);
         }
@@ -60,13 +68,15 @@ public class AsyncWriter {
     }
 
     public void write(AerospikeRecord record) {
+        listener.raiseErrors();
         Key key = record.key();
         Bin[] bins = record.bins();
         inFlight.increment();
-        client.put(writePolicy, inFlight, key, bins);
+        client.put(writePolicy, listener, key, bins);
     }
 
     public void flush() {
+        listener.raiseErrors();
         inFlight.waitUntilZero();
     }
     
@@ -87,24 +97,84 @@ public class AsyncWriter {
         return policy;
     }
     
-    class InFlightCounter implements WriteListener {
+    /*
+     * Write listener implementation to track when asynchronous DB commands have
+     * been completed and to record any errors raised by the commands.
+     */
+    class ResultListener implements WriteListener {
+        
+        private final Counter counter;
+        private final AtomicBoolean retry = new AtomicBoolean(true);
+        private final AtomicInteger exceptions = new AtomicInteger(0);
+        private final AtomicReference<Throwable> exception = new AtomicReference<>();
+        
+        public ResultListener(Counter counter) {
+            this.counter = counter;
+        }
+        
+        public void raiseErrors() throws ConnectException {
+            Throwable error = exception.get();
+            if (error == null) {
+                return;
+            }
+            String message = "Error writing records: " + exceptions.get() + " exception(s) occurred while asynchronously writing records";
+            if (retry.get()) {
+                throw new RetriableException(message, error);
+            } else {
+                throw new ConnectException(message, error);
+            }
+        }
 
+        @Override
+        public void onFailure(AerospikeException e) {
+            log.error("Error writing record", e);
+            exception.compareAndSet(null, e);
+            retry.compareAndSet(true, retriable(e));
+            exceptions.incrementAndGet();
+            counter.decrement();
+        }
+
+        @Override
+        public void onSuccess(Key key) {
+            log.trace("Successfully put key {}", key);
+            counter.decrement();
+        }
+        
+        private boolean retriable(AerospikeException e) {
+            if (e instanceof CommandRejected
+                    || e instanceof Timeout
+                    || e instanceof Connection) {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    /*
+     * Atomic counter to keep track of number of asynchronous, in-flight
+     * requests
+     */
+    class Counter {
         private static final long DEFAULT_SLEEP_INTERVAL_MS = 1;
 
         private AtomicInteger counter;
         private final long sleepMs;
 
-        public InFlightCounter() {
+        public Counter() {
             this(DEFAULT_SLEEP_INTERVAL_MS);
         }
 
-        public InFlightCounter(long sleepMs) {
+        public Counter(long sleepMs) {
             this.sleepMs = sleepMs;
             counter = new AtomicInteger(0);
         }
         
         public void increment() {
             counter.incrementAndGet();
+        }
+        
+        public void decrement() {
+            counter.decrementAndGet();
         }
 
         public void waitUntilZero() {
@@ -117,18 +187,6 @@ public class AsyncWriter {
             } catch (InterruptedException e) {
                 throw new ConnectException("Interrupted while waiting to complete in-flight requests", e);
             }
-        }
-
-        @Override
-        public void onFailure(AerospikeException e) {
-            log.error("Error writing record", e);
-            counter.decrementAndGet();
-        }
-
-        @Override
-        public void onSuccess(Key key) {
-            log.trace("Successfully put key {}", key);
-            counter.decrementAndGet();
         }
     }
 }

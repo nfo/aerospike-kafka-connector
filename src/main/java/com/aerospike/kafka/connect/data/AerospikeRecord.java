@@ -21,8 +21,8 @@ import com.aerospike.client.Key;
 
 public class AerospikeRecord {
 
-    private Key key;
-    private Bin[] bins;
+    private final Key key;
+    private final Bin[] bins;
 
     public AerospikeRecord(Key key, Bin[] bins) {
         this.key = key;

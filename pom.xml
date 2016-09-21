@@ -5,6 +5,7 @@
   <artifactId>apache-kafka-connector</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <description>Aerospike Connector for Kafka Connect</description>
+  <url>https://github.com/aerospike/aerospike-kafka-connector</url>
 
   <properties>
     <log4j.configuration>config/log4j.properties</log4j.configuration>
@@ -12,8 +13,19 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
 
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
+
   <scm>
-    <url>https://github.com/aerospike/aerospike-kafka-connector</url>
+    <connection>scm:git:git@github.com:aerospike/aerospike-kafka-connector.git</connection>
+    <url>scm:git:git@github.com:aerospike/aerospike-kafka-connector.git</url>
+    <developerConnection>scm:git:git@github.com:aerospike/aerospike-kafka-connector.git</developerConnection>
   </scm>
 
   <issueManagement>

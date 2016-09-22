@@ -80,6 +80,10 @@ public class AsyncWriter {
         inFlight.waitUntilZero();
     }
     
+    public void close() {
+        client.close();
+    }
+
     private AsyncClientPolicy createClientPolicy(ConnectorConfig config) {
         AsyncClientPolicy policy = new AsyncClientPolicy();
         policy.asyncMaxCommands = config.getMaxAsyncCommands();

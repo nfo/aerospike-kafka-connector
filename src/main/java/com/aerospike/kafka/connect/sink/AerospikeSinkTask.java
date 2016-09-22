@@ -79,5 +79,6 @@ public class AerospikeSinkTask extends SinkTask {
     @Override
     public void stop() {
         log.trace("Stopping {} task", this.getClass().getName());
+        writer.close();
     }
 }

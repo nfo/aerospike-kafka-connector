@@ -18,6 +18,7 @@ package com.aerospike.kafka.connect.sink;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -40,6 +41,9 @@ public class AerospikeSinkTask extends SinkTask {
     private RecordMapperFactory mappers;
     private AsyncWriter writer;
 
+    private long lastFlushTimeMillis = 0;
+    private Map<TopicPartition, OffsetAndMetadata> lastOffsets;
+
     public AerospikeSinkTask() {
     }
 
@@ -49,6 +53,9 @@ public class AerospikeSinkTask extends SinkTask {
 
     @Override
     public void flush(Map<TopicPartition, OffsetAndMetadata> offsets) {
+        if (log.isInfoEnabled()) {
+            report(offsets);
+        }
         writer.flush();
     }
 
@@ -80,7 +87,27 @@ public class AerospikeSinkTask extends SinkTask {
     public void stop() {
         log.trace("Stopping {} task", this.getClass().getName());
         if (writer != null) {
-          writer.close();
+            writer.close();
         }
+    }
+
+    private void report(Map<TopicPartition, OffsetAndMetadata> currentOffsets) {
+        long now = System.currentTimeMillis();
+        if (lastFlushTimeMillis > 0) {
+            long elapsedMs = now - lastFlushTimeMillis;
+            for (Entry<TopicPartition, OffsetAndMetadata> entry : currentOffsets.entrySet()) {
+                TopicPartition partition = entry.getKey();
+                OffsetAndMetadata lastOffset = lastOffsets.get(partition);
+                if (lastOffset == null) {
+                    continue;
+                }
+                OffsetAndMetadata currentOffset = entry.getValue();
+                long records = currentOffset.offset() - lastOffset.offset();
+                log.info("Wrote {} records in {} ms for topic {}, partition {} - throughput: {} TPS", records,
+                        elapsedMs, partition.topic(), partition.partition(), Math.round(1000.0 * records / elapsedMs));
+            }
+        }
+        lastFlushTimeMillis = now;
+        lastOffsets = currentOffsets;
     }
 }

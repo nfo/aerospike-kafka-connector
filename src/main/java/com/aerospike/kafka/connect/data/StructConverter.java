@@ -65,11 +65,13 @@ public class StructConverter extends RecordConverter {
         String namespace = config.getNamespace();
         String set = config.getSet();
         Object userKey = recordKey;
-        if (config.getSetField() != null) {
-            set = struct.getString(config.getSetField());
+        String setField = config.getSetField();
+        if (setField != null) {
+            set = struct.getString(setField);
         }
-        if (config.getKeyField() != null) {
-            userKey = struct.get(config.getKeyField());
+        String keyField = config.getKeyField();
+        if (keyField != null) {
+            userKey = struct.get(keyField);
         }
         Key key = createKey(namespace, set, userKey);
         return key;

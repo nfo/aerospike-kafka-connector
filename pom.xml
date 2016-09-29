@@ -3,7 +3,7 @@
 
   <groupId>com.aerospike</groupId>
   <artifactId>apache-kafka-connector</artifactId>
-  <version>0.0.2-SNAPSHOT</version>
+  <version>0.0.2</version>
   <name>Aerospike Kafka Connector</name>
   <description>Aerospike Connector for Kafka Connect</description>
   <url>https://github.com/aerospike/aerospike-kafka-connector</url>
@@ -36,7 +36,7 @@
     <connection>scm:git:git@github.com:aerospike/aerospike-kafka-connector.git</connection>
     <url>scm:git:git@github.com:aerospike/aerospike-kafka-connector.git</url>
     <developerConnection>scm:git:git@github.com:aerospike/aerospike-kafka-connector.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v0.0.2</tag>
   </scm>
 
   <distributionManagement>

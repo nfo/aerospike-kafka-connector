@@ -4,8 +4,18 @@
   <groupId>com.aerospike</groupId>
   <artifactId>apache-kafka-connector</artifactId>
   <version>0.0.2-SNAPSHOT</version>
+  <name>Aerospike Kafka Connector</name>
   <description>Aerospike Connector for Kafka Connect</description>
   <url>https://github.com/aerospike/aerospike-kafka-connector</url>
+
+  <developers>
+    <developer>
+      <name>Jan Hecking</name>
+      <email>jhecking@aerospike.com</email>
+      <organization>Aerospike</organization>
+      <organizationUrl>http://www.aerospike.com/</organizationUrl>
+    </developer>
+  </developers>
 
   <properties>
     <log4j.configuration>config/log4j.properties</log4j.configuration>
@@ -28,6 +38,13 @@
     <developerConnection>scm:git:git@github.com:aerospike/aerospike-kafka-connector.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
+
+  <distributionManagement>
+    <repository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
 
   <issueManagement>
     <url>https://github.com/aerospike/aerospike-kafka-connector/issues</url>
@@ -82,7 +99,14 @@
         <version>2.5.3</version>
         <configuration>
           <tagNameFormat>v@{project.version}</tagNameFormat>
+          <pushChanges>false</pushChanges>
+          <arguments>-Paerospike-kafka-connector-release</arguments>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>2.8.2</version>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -114,5 +138,67 @@
       </resource>
     </resources>
   </build>
+
+  <profiles>
+    <profile>
+      <id>aerospike-kafka-connector-release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.0.1</version>
+            <executions>
+              <execution>
+                <id>create-source-jar</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.10.4</version>
+            <executions>
+              <execution>
+                <id>create-javadoc-jar</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-repository-plugin</artifactId>
+            <version>2.4</version>
+            <executions>
+              <execution>
+                <id>create-bundle</id>
+                <goals>
+                  <goal>bundle-create</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>

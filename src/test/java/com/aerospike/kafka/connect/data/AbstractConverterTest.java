@@ -235,12 +235,18 @@ public abstract class AbstractConverterTest {
 
         Bin bins[] = result.bins();
         assertEquals(2, bins.length);
-        Bin bin1 = bins[0];
-        assertEquals("bin1", bin1.name);
-        assertEquals("aString", bin1.value.toString());
-        Bin bin2 = bins[1];
-        assertEquals("bin2X", bin2.name);
-        assertEquals("anotherString", bin2.value.toString());
+        for (Bin bin : bins) {
+            switch (bin.name) {
+            case "bin1":
+                assertEquals("aString", bin.value.toString());
+                break;
+            case "bin2X":
+                assertEquals("anotherString", bin.value.toString());
+                break;
+            default:
+                fail("Unexpected bin name: " + bin.name);
+            }
+        }
     }
 
     protected Map<String, TopicConfig> configFor(String topic, String... keysAndValues) {

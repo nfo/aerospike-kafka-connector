@@ -144,6 +144,7 @@ public class StructConverter extends RecordConverter {
         case STRUCT:
             Struct nestedStruct = struct.getStruct(fieldName);
             bin = new Bin(binName, mapFromStruct(nestedStruct));
+            break;
         default:
             log.info("Ignoring struct field {} of unsupported type {}", fieldName, type);
         }

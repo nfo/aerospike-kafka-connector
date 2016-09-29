@@ -1,8 +1,10 @@
 /bin/
 /target/
-.classpath
+/pom.xml.releaseBackup
+/release.properties
 .settings
 .project
+.classpath
 .checkstyle
 *.jpage
 confluent-*

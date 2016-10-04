@@ -1,7 +1,7 @@
-# Kafka Connect Aerospike Connector
+# Aerospike Connector for Kafka Connect
 
-aerospike-kafka-connector is a [Kafka Connector](http://kafka.apache.org/documentation.html#connect)
-for copying data between Kafka and the Aerospike NoSQL database.
+aerospike-kafka-connector is a connector for [Kafka Connect](http://kafka.apache.org/documentation.html#connect)
+that copies your data from Kafka into [Aerospike](http://www.aerospike.com/).
 
 ## Development
 
@@ -20,8 +20,8 @@ build aerospike-kafka-connector with Maven using the standard lifecycle phases.
 
 ## License
 
-The Aerospike Kafka Connector is made available under the terms of the Apache
-License, Version 2, as stated in the file `LICENSE`.
+The Aerospike Connector for Kafka Connect is made available under the terms of
+the Apache License, Version 2, as stated in the file `LICENSE`.
 
 Individual files may be made available under their own specific license, all
 compatible with Apache License, Version 2. Please see individual files for

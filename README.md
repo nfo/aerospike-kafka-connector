@@ -1,4 +1,9 @@
-# Aerospike Connector for Kafka Connect
+# Aerospike Connector for Kafka Connect [![travis][travis-image]][travis-url] [![maven][maven-image]][maven-url]
+
+[travis-image]: https://travis-ci.org/aerospike/aerospike-kafka-connector.svg?branch=master
+[travis-url]: https://travis-ci.org/aerospike/aerospike-kafka-connector
+[maven-image]: https://img.shields.io/maven-central/v/com.aerospike/aerospike-kafka-connector.svg?maxAge=2592000
+[maven-url]: http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22aerospike-kafka-connector%22
 
 aerospike-kafka-connector is a connector for [Kafka Connect](http://kafka.apache.org/documentation.html#connect)
 that copies your data from Kafka into [Aerospike](http://www.aerospike.com/).

@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.aerospike</groupId>
-  <artifactId>apache-kafka-connector</artifactId>
+  <artifactId>aerospike-kafka-connector</artifactId>
   <version>0.0.3-SNAPSHOT</version>
   <name>Aerospike Kafka Connector</name>
   <description>Aerospike Connector for Kafka Connect</description>

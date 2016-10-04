@@ -31,7 +31,7 @@ public class TopicConfig extends AbstractConfig {
 
     public static final String SET_CONFIG = "set";
     private static final String SET_DOC = "Set to use for the topic";
-    
+
     public static final String KEY_FIELD_CONFIG = "key_field";
     private static final String KEY_FIELD_DOC = "Name of the Kafka record field that contains the Aerospike user key";
 

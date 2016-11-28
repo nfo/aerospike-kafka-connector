@@ -80,7 +80,7 @@ public class SyncWriter {
     }
     
     public void close() {
-        log.trace("NF: {} calling `client.close()`", this.getClass().getName());
+        log.info("NF: {} calling `client.close()`", this.getClass().getName());
         client.close();
     }
 

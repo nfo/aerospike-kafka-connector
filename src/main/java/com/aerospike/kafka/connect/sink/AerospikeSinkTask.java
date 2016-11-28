@@ -53,7 +53,7 @@ public class AerospikeSinkTask extends SinkTask {
 
     @Override
     public void flush(Map<TopicPartition, OffsetAndMetadata> offsets) {
-        log.trace("NF: flushing {}", this.getClass().getName());
+        log.info("NF: flushing {}", this.getClass().getName());
         if (log.isInfoEnabled()) {
             report(offsets);
         }
@@ -62,7 +62,7 @@ public class AerospikeSinkTask extends SinkTask {
 
     @Override
     public void put(Collection<SinkRecord> sinkRecords) {
-        log.trace("NF: will put {} records", sinkRecords.size());
+        log.info("NF: will put {} records", sinkRecords.size());
         for (SinkRecord sinkRecord : sinkRecords) {
             try {
                 RecordConverter mapper = mappers.getMapper(sinkRecord);
@@ -90,7 +90,7 @@ public class AerospikeSinkTask extends SinkTask {
     @Override
     public void stop() {
         log.trace("Stopping {} task", this.getClass().getName());
-        log.trace("NF: Stopping {} task", this.getClass().getName());
+        log.info("NF: Stopping {} task", this.getClass().getName());
         if (writer != null) {
             writer.close();
         }

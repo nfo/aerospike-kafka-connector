@@ -39,7 +39,7 @@ public class AerospikeSinkTask extends SinkTask {
     private static final Logger log = LoggerFactory.getLogger(AerospikeSinkTask.class);
 
     private RecordMapperFactory mappers;
-    private AsyncWriter writer;
+    private SyncWriter writer;
 
     private long lastFlushTimeMillis = 0;
     private Map<TopicPartition, OffsetAndMetadata> lastOffsets;
@@ -84,7 +84,7 @@ public class AerospikeSinkTask extends SinkTask {
         log.info("NF: Starting {} task with config: {}", this.getClass().getName(), props);
         ConnectorConfig config = new ConnectorConfig(props);
         mappers = new RecordMapperFactory(config.getTopicConfigs());
-        writer = new AsyncWriter(config);
+        writer = new SyncWriter(config);
     }
 
     @Override

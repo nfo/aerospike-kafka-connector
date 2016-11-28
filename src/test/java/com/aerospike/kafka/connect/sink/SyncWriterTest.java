@@ -14,7 +14,7 @@ import com.aerospike.client.Key;
 import com.aerospike.client.Record;
 import com.aerospike.kafka.connect.data.AerospikeRecord;
 
-public class AsyncWriterTest {
+public class SyncWriterTest {
 
     static final ConnectorConfig config = defaultConfig();
     static AerospikeClient syncClient;
@@ -31,14 +31,14 @@ public class AsyncWriterTest {
     
     @Test
     public void testWriteAndFlush() {
-        AsyncWriter writer = new AsyncWriter(config);
+        SyncWriter writer = new SyncWriter(config);
         Random rnd = new Random();
         int noRecords = 100;
         Key[] keys = new Key[noRecords];
         AerospikeRecord[] records = new AerospikeRecord[noRecords];
         for (int i = 0; i < noRecords; i++) {
             int id = 100_000 + rnd.nextInt(900_000);
-            Key key = new Key("test", "test", "AsyncWriterTest" + rnd.nextInt());
+            Key key = new Key("test", "test", "SyncWriterTest" + rnd.nextInt());
             Bin[] bins = new Bin[] { new Bin("id", id), new Bin("str", "aString"), new Bin("int", 1234) };
             keys[i] = key;
             records[i] = new AerospikeRecord(key, bins);

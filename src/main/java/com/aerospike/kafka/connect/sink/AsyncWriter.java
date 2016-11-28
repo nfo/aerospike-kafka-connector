@@ -77,13 +77,13 @@ public class AsyncWriter {
     }
 
     public void flush() {
-        log.trace("NF: {} flushing (= waiting for remaining async requests and check errors)", this.getClass().getName());
+        log.info("NF: {} flushing (= waiting for remaining async requests and check errors)", this.getClass().getName());
         listener.raiseErrors();
         inFlight.waitUntilZero();
     }
     
     public void close() {
-        log.trace("NF: {} calling `client.close()`", this.getClass().getName());
+        log.info("NF: {} calling `client.close()`", this.getClass().getName());
         client.close();
     }
 

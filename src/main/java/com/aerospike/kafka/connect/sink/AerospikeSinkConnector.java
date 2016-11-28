@@ -45,6 +45,7 @@ public class AerospikeSinkConnector extends SinkConnector {
     @Override
     public void start(Map<String, String> props) {
         log.info("Starting {} connector", this.getClass().getName());
+        log.info("NF: Starting {} connector", this.getClass().getName());
         try {
             configProperties = props;
             new ConnectorConfig(props);

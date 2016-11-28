@@ -53,6 +53,7 @@ public class AerospikeSinkTask extends SinkTask {
 
     @Override
     public void flush(Map<TopicPartition, OffsetAndMetadata> offsets) {
+        log.trace("NF: flushing {}", this.getClass().getName());
         if (log.isInfoEnabled()) {
             report(offsets);
         }
@@ -61,6 +62,7 @@ public class AerospikeSinkTask extends SinkTask {
 
     @Override
     public void put(Collection<SinkRecord> sinkRecords) {
+        log.trace("NF: will put {} records", sinkRecords.size());
         for (SinkRecord sinkRecord : sinkRecords) {
             try {
                 RecordConverter mapper = mappers.getMapper(sinkRecord);
@@ -71,6 +73,7 @@ public class AerospikeSinkTask extends SinkTask {
                 writer.write(record);
             } catch (AerospikeException e) {
                 log.error("Error writing to record", e);
+                log.error("NF: Error writing to record", e);
             }
         }
     }
@@ -78,6 +81,7 @@ public class AerospikeSinkTask extends SinkTask {
     @Override
     public void start(Map<String, String> props) {
         log.trace("Starting {} task with config: {}", this.getClass().getName(), props);
+        log.info("NF: Starting {} task with config: {}", this.getClass().getName(), props);
         ConnectorConfig config = new ConnectorConfig(props);
         mappers = new RecordMapperFactory(config.getTopicConfigs());
         writer = new AsyncWriter(config);
@@ -86,6 +90,7 @@ public class AerospikeSinkTask extends SinkTask {
     @Override
     public void stop() {
         log.trace("Stopping {} task", this.getClass().getName());
+        log.trace("NF: Stopping {} task", this.getClass().getName());
         if (writer != null) {
             writer.close();
         }
@@ -104,6 +109,8 @@ public class AerospikeSinkTask extends SinkTask {
                 OffsetAndMetadata currentOffset = entry.getValue();
                 long records = currentOffset.offset() - lastOffset.offset();
                 log.info("Wrote {} records in {} ms for topic {}, partition {} - throughput: {} TPS", records,
+                        elapsedMs, partition.topic(), partition.partition(), Math.round(1000.0 * records / elapsedMs));
+                log.info("NF: Wrote {} records in {} ms for topic {}, partition {} - throughput: {} TPS", records,
                         elapsedMs, partition.topic(), partition.partition(), Math.round(1000.0 * records / elapsedMs));
             }
         }

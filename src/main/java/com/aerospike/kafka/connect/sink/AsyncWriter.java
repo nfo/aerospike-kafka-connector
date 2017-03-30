@@ -97,7 +97,8 @@ public class AsyncWriter {
         if (action != null) {
             policy.recordExistsAction = action;
         }
-        log.trace("Write Policy: recordExistsAction={}", policy.recordExistsAction);
+        policy.expiration = config.getPolicyExpiration();
+        log.trace("Write Policy: recordExistsAction={}, expiration={}", policy.recordExistsAction, policy.expiration);
         return policy;
     }
     

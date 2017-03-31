@@ -51,6 +51,10 @@ public class ConnectorConfig extends AbstractConfig {
     private static final Validator POLICY_RECORD_EXISTS_ACTION_VALIDATOR = ValidString.in("create_only", "update",
             "update_only", "replace", "replace_only");
 
+    public static final String POLICY_EXPIRATION_CONFIG = "policy.expiration";
+    private static final String POLICY_EXPIRATION_DOC = "Write Policy: Seconds record will live before being removed by the server. Defaults to namespace configuration variable \"default-ttl\" on the server";
+    private static final int POLICY_EXPIRATION_DEFAULT = 0;
+
     public static final String MAX_ASYNC_COMMANDS_CONFIG = "max_async_commands";
     private static final String MAX_ASYNC_COMMANDS_DOC = "Maximum number of concurrent asynchronous client requests to the Aerospike cluster";
     private static final int MAX_ASYNC_COMMANDS_DEFAULT = 300;
@@ -65,6 +69,8 @@ public class ConnectorConfig extends AbstractConfig {
                 .define(HOSTS_CONFIG, Type.STRING, HOSTS_DEFAULT, HOSTS_VALIDATOR, Importance.HIGH, HOSTS_DOC)
                 .define(POLICY_RECORD_EXISTS_ACTION_CONFIG, Type.STRING, POLICY_RECORD_EXISTS_ACTION_DEFAULT,
                         POLICY_RECORD_EXISTS_ACTION_VALIDATOR, Importance.LOW, POLICY_RECORD_EXISTS_ACTION_DOC)
+                .define(POLICY_EXPIRATION_CONFIG, Type.INT, POLICY_EXPIRATION_DEFAULT, Importance.LOW,
+                        POLICY_EXPIRATION_DOC)
                 .define(MAX_ASYNC_COMMANDS_CONFIG, Type.INT, MAX_ASYNC_COMMANDS_DEFAULT, Importance.LOW,
                         MAX_ASYNC_COMMANDS_DOC)
                 .define(MAX_COMMAND_ACTION_CONFIG, Type.STRING, MAX_COMMAND_ACTION_DEFAULT,
@@ -99,6 +105,10 @@ public class ConnectorConfig extends AbstractConfig {
             // This should never happen if the configuration passes validation!
             throw new ConfigException(POLICY_RECORD_EXISTS_ACTION_CONFIG, action, "Unsupported policy value.");
         }
+    }
+
+    public int getPolicyExpiration() {
+        return getInt(POLICY_EXPIRATION_CONFIG);
     }
 
     public int getMaxAsyncCommands() {
